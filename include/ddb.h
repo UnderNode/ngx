@@ -1,5 +1,11 @@
 #include <mysql/mysql.h>
 
+#define MYSQL_DB_ERROR      0x0001
+#define MYSQL_DB_OK         0x0002
+#define MYSQL_DB_TRYAGAIN   0x0004
+
+#define STMT_PASSWORD   "SELECT usuario, password " \
+                            "FROM usuarios WHERE usuario = ? AND password = BINARY ? LIMIT 1"
 /**
  * Info for MySQL Connection
  * */

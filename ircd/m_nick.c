@@ -203,7 +203,6 @@ int m_nick(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
     {
       Debug((DEBUG_INFO, "Password mismatch? %d", ok));
     }
-    finish_mysql_connection();
   }
 
   if (strlen(arg) > IRCD_MIN(NICKLEN, feature_int(FEAT_NICKLEN)))
@@ -244,11 +243,18 @@ int m_nick(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
       hide_hostmask(sptr, FLAG_ACCOUNT);
 
       cli_user(sptr)->acc_create = time(NULL);
-
+      /**
+       * Notificate to all servers
+       * */
       sendcmdto_serv_butone(cptr, CMD_ACCOUNT, sptr,
                             cli_user(sptr)->acc_create ? "%C %s %Tu" : "%C %s",
                             sptr, cli_user(sptr)->account,
                             cli_user(sptr)->acc_create);
+      /**
+       * Send minimal message to user
+       * */
+      sendrawto_one(cptr, ":%s!-@- NOTICE %s :*** Wellcome to home ;).",
+                    "NiCK", cli_name(sptr));
     }
     return set_nick_name(cptr, sptr, nick, parc, parv);
   }
@@ -284,13 +290,18 @@ int m_nick(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
       {
         ircd_strncpy(cli_user(sptr)->account, nick, ACCOUNTLEN);
         hide_hostmask(sptr, FLAG_ACCOUNT);
-        
+
         cli_user(sptr)->acc_create = time(NULL);
 
         sendcmdto_serv_butone(cptr, CMD_ACCOUNT, sptr,
                               cli_user(sptr)->acc_create ? "%C %s %Tu" : "%C %s",
                               sptr, cli_user(sptr)->account,
                               cli_user(sptr)->acc_create);
+        /**
+         * Send minimal message to user
+         * */
+        sendrawto_one(cptr, ":%s!-@- NOTICE %s :*** Wellcome to home ;).",
+                      "NiCK", cli_name(sptr));
       }
       return set_nick_name(cptr, sptr, nick, parc, parv);
     }

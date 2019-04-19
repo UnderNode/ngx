@@ -10,3 +10,6 @@ config.cache
 ircu.tags
 autom4te.cache
 stamp-h1
+lib/
+bin/
+.vscode
