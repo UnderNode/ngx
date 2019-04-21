@@ -28,7 +28,7 @@
 /* Do NOT edit those: */
 
 #ifndef BASE_VERSION
-#define BASE_VERSION "u2.10"
+#define BASE_VERSION "u2.10.U"
 #endif
 
 #ifndef MAJOR_PROTOCOL
