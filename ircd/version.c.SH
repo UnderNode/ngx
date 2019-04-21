@@ -76,7 +76,11 @@ const char *infotext[] = {
     "Debugging and support:",
     "SeKs, Maniac-, HeKTik, OmniDynmc, Liandrin, Dianora",
     "Special thanks to Angel and Buff for believing in us and putting"
-    "up with frantic late night phone calls"
+    "up with frantic late night phone calls",
+    "",
+    "Undernode IRCD Daemon is based in ircu from version u2.10, patch 19.",
+    "The contributors are:",
+    "Undernode DevOps Team      UnderNode Team      <admin@undernode.com>",
     "",
     "Thanks goes to all other people who contributed to any version.",
     "A full listing of all coders can be found in doc/Authors in the",
