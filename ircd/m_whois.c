@@ -215,8 +215,8 @@ static void do_whois(struct Client *sptr, struct Client *acptr, int parc)
       send_reply(sptr, RPL_WHOISACTUALLY, name, user->username,
                  user->realhost, ircd_ntoa(&cli_ip(acptr)));
 
-    send_reply(sptr, RPL_UMODEIS, cli_name(sptr), umode_str(sptr));
-    
+    send_reply(sptr, RPL_UMODEIS, cli_name(acptr), umode_str(acptr));
+
     /* Hint: if your looking to add more flags to a user, eg +h, here's
      *       probably a good place to add them :)
      */
