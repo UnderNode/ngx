@@ -832,7 +832,7 @@ static Numeric replyTable[] = {
 /* 399 */
   { 0 },
 /* 400 */
-  { 0 },
+  { ERR_NICKREGISTERED, ":*** Nickname registered, use /nick %s:<password_here> for use this nickname.", "400" },
 /* 401 */
   { ERR_NOSUCHNICK, "%s :No such nick", "401" },
 /* 402 */
@@ -1170,7 +1170,7 @@ static Numeric replyTable[] = {
 /* 568 */
   { 0 },
 /* 569 */
-  { 0 },
+  { ERR_NICKPASSWDMISMATCH, ":*** Password mismatch, try again.", "569" },
 /* 570 */
   { 0 },
 /* 571 */

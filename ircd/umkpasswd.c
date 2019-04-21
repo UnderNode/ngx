@@ -44,13 +44,13 @@
 #include "ircd_crypt_plain.h"
 
 /* bleah, evil globals */
-umkpasswd_conf_t* umkpasswd_conf;
-crypt_mechs_t* crypt_mechs_root;
+umkpasswd_conf_t *umkpasswd_conf;
+crypt_mechs_t *crypt_mechs_root;
 int log_inassert = 0;
 time_t CurrentTime;
 
 void sendto_opmask_butone(struct Client *one, unsigned int mask,
-			  const char *pattern, ...)
+                          const char *pattern, ...)
 {
   /* only needed with memdebug, which also calls Debug() */
 }
@@ -58,41 +58,41 @@ void sendto_opmask_butone(struct Client *one, unsigned int mask,
 void copyright(void)
 {
   fprintf(stderr, "umkpasswd - Copyright (c) 2002 hikari\n");
-return;
+  return;
 }
 
 void show_help(void)
 {
 #ifdef DEBUGMODE
- char *debughelp = "[-d <level>] ";
+  char *debughelp = "[-d <level>] ";
 #else
- char *debughelp = "";
+  char *debughelp = "";
 #endif
 
- copyright();
- /*fprintf(stderr, "umkpasswd [-l] [[[-a]||[-u]] <username>] [-y <class>] %s[-c <file>] -m <mech> [password]\n\n", debughelp);*/
- fprintf(stderr, "umkpasswd [-l] %s-m <mech> [password]\n\n", debughelp);
- fprintf(stderr, "  -l            List mechanisms available.\n");
+  copyright();
+  /*fprintf(stderr, "umkpasswd [-l] [[[-a]||[-u]] <username>] [-y <class>] %s[-c <file>] -m <mech> [password]\n\n", debughelp);*/
+  fprintf(stderr, "umkpasswd [-l] %s-m <mech> [password]\n\n", debughelp);
+  fprintf(stderr, "  -l            List mechanisms available.\n");
 #if 0
  fprintf(stderr, "  -a <user>     Add user to conf file.\n");
  fprintf(stderr, "  -u <user>     Update user's password field.\n");
  fprintf(stderr, "  -y <class>    Class to place oper in.\n");
 #endif
- fprintf(stderr, "  -m <mech>     Mechanism to use [MANDATORY].\n");
+  fprintf(stderr, "  -m <mech>     Mechanism to use [MANDATORY].\n");
 #ifdef DEBUGMODE
- fprintf(stderr, "  -d <level>    Debug level to run at.\n");
+  fprintf(stderr, "  -d <level>    Debug level to run at.\n");
 #endif
-/*
+  /*
  fprintf(stderr, "  -c <file>     Conf file to use, default is DPATH/CPATH.\n\n");
 */
-return;
+  return;
 }
 
 /* our implementation of debug() */
 void debug(int level, const char *form, ...)
 {
-va_list vl;
-int err = errno;
+  va_list vl;
+  int err = errno;
 
   if (level <= (umkpasswd_conf->debuglevel))
   {
@@ -106,7 +106,7 @@ int err = errno;
 
 /* quick implementation of log_write() for assert() call */
 void log_write(enum LogSys subsys, enum LogLevel severity,
-	       unsigned int flags, const char *fmt, ...)
+               unsigned int flags, const char *fmt, ...)
 {
   va_list vl;
   va_start(vl, fmt);
@@ -118,343 +118,351 @@ void log_write(enum LogSys subsys, enum LogLevel severity,
 /* quick and dirty salt generator */
 char *make_salt(const char *salts)
 {
-char *tmp = NULL;
-long int n = 0;
+  char *tmp = NULL;
+  long int n = 0;
 
- /* try and get around them running this time after time in quick succession */
- sleep(1);
- srandom((unsigned int)time(NULL));
+  /* try and get around them running this time after time in quick succession */
+  sleep(1);
+  srandom((unsigned int)time(NULL));
 
- if((tmp = calloc(3, sizeof(char))) != NULL)
- {
-  /* can't optimize this much more than just doing it twice */
-  n = ((float)(strlen(salts))*random()/(RAND_MAX+1.0));
-  memcpy(tmp, (salts+n), 1);
-  sleep(2);
-  n = ((float)(strlen(salts))*random()/(RAND_MAX+1.0));
-  memcpy((tmp+1), (salts+n), 1);
+  if ((tmp = calloc(3, sizeof(char))) != NULL)
+  {
+    /* can't optimize this much more than just doing it twice */
+    n = ((float)(strlen(salts)) * random() / (RAND_MAX + 1.0));
+    memcpy(tmp, (salts + n), 1);
+    sleep(2);
+    n = ((float)(strlen(salts)) * random() / (RAND_MAX + 1.0));
+    memcpy((tmp + 1), (salts + n), 1);
 
-  Debug((DEBUG_DEBUG, "salts = %s", salts));
-  Debug((DEBUG_DEBUG, "strlen(salts) = %d", strlen(salts)));
- }
+    Debug((DEBUG_DEBUG, "salts = %s", salts));
+    Debug((DEBUG_DEBUG, "strlen(salts) = %d", strlen(salts)));
+  }
 
-return tmp;
+  return tmp;
 }
 
 /* our implementation of ircd_crypt_register_mech() */
-int ircd_crypt_register_mech(crypt_mech_t* mechanism)
+int ircd_crypt_register_mech(crypt_mech_t *mechanism)
 {
-crypt_mechs_t* crypt_mech;
+  crypt_mechs_t *crypt_mech;
 
- Debug((DEBUG_INFO, "ircd_crypt_register_mech: registering mechanism: %s", mechanism->shortname));
+  Debug((DEBUG_INFO, "ircd_crypt_register_mech: registering mechanism: %s", mechanism->shortname));
 
- /* try to allocate some memory for the new mechanism */
- if ((crypt_mech = (crypt_mechs_t*)MyMalloc(sizeof(crypt_mechs_t))) == NULL)
- {
-  /* aww poot, we couldn't get any memory, scream a little then back out */
-  Debug((DEBUG_MALLOC, "ircd_crypt_register_mech: could not allocate memory for %s", mechanism->shortname));
-  return -1;
- }
+  /* try to allocate some memory for the new mechanism */
+  if ((crypt_mech = (crypt_mechs_t *)MyMalloc(sizeof(crypt_mechs_t))) == NULL)
+  {
+    /* aww poot, we couldn't get any memory, scream a little then back out */
+    Debug((DEBUG_MALLOC, "ircd_crypt_register_mech: could not allocate memory for %s", mechanism->shortname));
+    return -1;
+  }
 
- /* ok, we have memory, initialise it */
- memset(crypt_mech, 0, sizeof(crypt_mechs_t));
+  /* ok, we have memory, initialise it */
+  memset(crypt_mech, 0, sizeof(crypt_mechs_t));
 
- /* assign the data */
- crypt_mech->mech = mechanism;
- crypt_mech->next = crypt_mech->prev = NULL;
+  /* assign the data */
+  crypt_mech->mech = mechanism;
+  crypt_mech->next = crypt_mech->prev = NULL;
 
- /* first of all, is there anything there already? */
- if(crypt_mechs_root->next == NULL)
- {
-  /* nope, just add ourself */
-  crypt_mechs_root->next = crypt_mechs_root->prev = crypt_mech;
- } else {
-  /* nice and simple, put ourself at the end */
-  crypt_mech->prev = crypt_mechs_root->prev;
-  crypt_mech->next = NULL;
-  crypt_mechs_root->prev = crypt_mech->prev->next = crypt_mech;
- }
+  /* first of all, is there anything there already? */
+  if (crypt_mechs_root->next == NULL)
+  {
+    /* nope, just add ourself */
+    crypt_mechs_root->next = crypt_mechs_root->prev = crypt_mech;
+  }
+  else
+  {
+    /* nice and simple, put ourself at the end */
+    crypt_mech->prev = crypt_mechs_root->prev;
+    crypt_mech->next = NULL;
+    crypt_mechs_root->prev = crypt_mech->prev->next = crypt_mech;
+  }
 
- /* we're done */
- Debug((DEBUG_INFO, "ircd_crypt_register_mech: registered mechanism: %s, crypt_function is at 0x%X.", crypt_mech->mech->shortname, &crypt_mech->mech->crypt_function));
- Debug((DEBUG_INFO, "ircd_crypt_register_mech: %s: %s", crypt_mech->mech->shortname, crypt_mech->mech->description));
+  /* we're done */
+  Debug((DEBUG_INFO, "ircd_crypt_register_mech: registered mechanism: %s, crypt_function is at 0x%X.", crypt_mech->mech->shortname, &crypt_mech->mech->crypt_function));
+  Debug((DEBUG_INFO, "ircd_crypt_register_mech: %s: %s", crypt_mech->mech->shortname, crypt_mech->mech->description));
 
-return 0;
+  return 0;
 }
 
-void sum(char* tmp)
+void sum(char *tmp)
 {
-char* str;
-FILE* file;
-MD5_CTX context;
-int len;
-unsigned char buffer[1024], digest[16], vstr[32];
+  char *str;
+  FILE *file;
+  MD5_CTX context;
+  int len;
+  unsigned char buffer[1024], digest[16], vstr[32];
 
-vstr[0] = '\0';
- str = tmp + strlen(tmp);
- while (str[-1] == '\r' || str[-1] == '\n') *--str = '\0';
- if (NULL == (file = fopen(tmp, "r")))
- {
-  fprintf(stderr, "unable to open %s: %s", tmp, strerror(errno));
-  exit(0);
- }
- MD5Init(&context);
- while ((fgets((char*)buffer, sizeof(buffer), file)) != NULL)
- {
-  MD5Update(&context, buffer, strlen((char*)buffer));
-  str = strstr((char*)buffer, "$Id: ");
-  if (str != NULL)
+  vstr[0] = '\0';
+  str = tmp + strlen(tmp);
+  while (str[-1] == '\r' || str[-1] == '\n')
+    *--str = '\0';
+  if (NULL == (file = fopen(tmp, "r")))
   {
-   for (str += 5; !isspace(*str); ++str) {}
-   while (isspace(*++str)) {}
-   for (len = 0; !isspace(str[len]); ++len) vstr[len] = str[len];
-   vstr[len] = '\0';
-   break;
+    fprintf(stderr, "unable to open %s: %s", tmp, strerror(errno));
+    exit(0);
   }
- }
- while ((len = fread (buffer, 1, sizeof(buffer), file)))
-  MD5Update(&context, buffer, len);
- MD5Final(digest, &context);
- fclose(file);
+  MD5Init(&context);
+  while ((fgets((char *)buffer, sizeof(buffer), file)) != NULL)
+  {
+    MD5Update(&context, buffer, strlen((char *)buffer));
+    str = strstr((char *)buffer, "$Id: ");
+    if (str != NULL)
+    {
+      for (str += 5; !isspace(*str); ++str)
+      {
+      }
+      while (isspace(*++str))
+      {
+      }
+      for (len = 0; !isspace(str[len]); ++len)
+        vstr[len] = str[len];
+      vstr[len] = '\0';
+      break;
+    }
+  }
+  while ((len = fread(buffer, 1, sizeof(buffer), file)))
+    MD5Update(&context, buffer, len);
+  MD5Final(digest, &context);
+  fclose(file);
 
- str = strrchr(tmp, '/');
- printf("    \"[ %s: ", str ? (str + 1) : tmp);
- for (len = 0; len < 16; len++)
-  printf ("%02x", digest[len]);
- printf(" %s ]\",\n", vstr);
+  str = strrchr(tmp, '/');
+  printf("    \"[ %s: ", str ? (str + 1) : tmp);
+  for (len = 0; len < 16; len++)
+    printf("%02x", digest[len]);
+  printf(" %s ]\",\n", vstr);
 }
 
 /* dump the loaded mechs list */
 void show_mechs(void)
 {
-crypt_mechs_t* mechs;
+  crypt_mechs_t *mechs;
 
- copyright();
- printf("\nAvailable mechanisms:\n");
+  copyright();
+  printf("\nAvailable mechanisms:\n");
 
- if(crypt_mechs_root == NULL)
-  return;
+  if (crypt_mechs_root == NULL)
+    return;
 
- mechs = crypt_mechs_root->next;
+  mechs = crypt_mechs_root->next;
 
- for(;;)
- {
-  if(mechs == NULL)
-   return;
+  for (;;)
+  {
+    if (mechs == NULL)
+      return;
 
-  printf(" %s\t\t%s\n", mechs->mech->mechname, mechs->mech->description);
+    printf(" %s\t\t%s\n", mechs->mech->mechname, mechs->mech->description);
 
-  mechs = mechs->next;
- }
+    mechs = mechs->next;
+  }
 }
 
 /* load in the mech "modules" */
 void load_mechs(void)
 {
- /* we need these loaded by hand for now */
+  /* we need these loaded by hand for now */
 
- ircd_register_crypt_native();
- ircd_register_crypt_smd5();
- ircd_register_crypt_plain(); /* yes I know it's slightly pointless */
+  ircd_register_crypt_native();
+  ircd_register_crypt_smd5();
+  ircd_register_crypt_plain(); /* yes I know it's slightly pointless */
 
-return;
+  return;
 }
 
-crypt_mechs_t* hunt_mech(const char* mechname)
+crypt_mechs_t *hunt_mech(const char *mechname)
 {
-crypt_mechs_t* mech;
+  crypt_mechs_t *mech;
 
- assert(NULL != mechname);
+  assert(NULL != mechname);
 
- if(crypt_mechs_root == NULL)
-  return NULL;
+  if (crypt_mechs_root == NULL)
+    return NULL;
 
- mech = crypt_mechs_root->next;
+  mech = crypt_mechs_root->next;
 
- for(;;)
- {
-  if(mech == NULL)
-   return NULL;
-
-  if(0 == (ircd_strcmp(mech->mech->mechname, mechname)))
-   return mech;
-
-  mech = mech->next;
- }
-}
-
-char* crypt_pass(const char* pw, const char* mech)
-{
-crypt_mechs_t* crypt_mech;
-char* salt, *untagged, *tagged;
-
- assert(NULL != pw);
- assert(NULL != mech);
-
- Debug((DEBUG_DEBUG, "pw = %s\n", pw));
- Debug((DEBUG_DEBUG, "mech = %s\n", mech));
-
- if (NULL == (crypt_mech = hunt_mech(mech)))
- {
-  printf("Unable to find mechanism %s\n", mech);
-  return NULL;
- }
-
- salt = make_salt(default_salts);
-
- untagged = (char *)CryptFunc(crypt_mech->mech)(pw, salt);
- tagged = (char *)MyMalloc(strlen(untagged)+CryptTokSize(crypt_mech->mech)+1);
- memset(tagged, 0, strlen(untagged)+CryptTokSize(crypt_mech->mech)+1);
- strncpy(tagged, CryptTok(crypt_mech->mech), CryptTokSize(crypt_mech->mech));
- strncpy(tagged+CryptTokSize(crypt_mech->mech), untagged, strlen(untagged));
-
-return tagged;
-}
-
-char* parse_arguments(int argc, char **argv)
-{
-int len = 0, c = 0;
-const char* options = "a:d:lm:u:y:5";
-
- umkpasswd_conf = (umkpasswd_conf_t*)MyMalloc(sizeof(umkpasswd_conf_t));
-
- umkpasswd_conf->flags = 0;
- umkpasswd_conf->debuglevel = 0;
- umkpasswd_conf->operclass = 0;
- umkpasswd_conf->user = NULL;
- umkpasswd_conf->mech = NULL;
-
-
- len = strlen(DPATH) + strlen(CPATH) + 2;
- umkpasswd_conf->conf = (char *)MyMalloc(len*sizeof(char));
- memset(umkpasswd_conf->conf, 0, len*sizeof(char));
- ircd_strncpy(umkpasswd_conf->conf, DPATH, strlen(DPATH));
- *((umkpasswd_conf->conf) + strlen(DPATH)) = '/';
- ircd_strncpy((umkpasswd_conf->conf) + strlen(DPATH) + 1, CPATH, strlen(CPATH));
-
- len = 0;
-
- while ((EOF != (c = getopt(argc, argv, options))) && !len)
- {
-  switch (c)
+  for (;;)
   {
-   case '5':
-   {
-    char t1[1024];
-    while (fgets(t1, sizeof(t1), stdin)) sum(t1);
-   }
-   exit(0);
+    if (mech == NULL)
+      return NULL;
 
-   case 'y':
-    umkpasswd_conf->operclass = atoi(optarg);
-    if (umkpasswd_conf->operclass < 0)
-     umkpasswd_conf->operclass = 0;
-   break;
+    if (0 == (ircd_strcmp(mech->mech->mechname, mechname)))
+      return mech;
 
-   case 'u':
-    if(umkpasswd_conf->flags & ACT_ADDOPER)
-    {
-     fprintf(stderr, "-a and -u are mutually exclusive.  Use either or neither.\n");
-     abort(); /* b0rk b0rk b0rk */
-    }
-
-    umkpasswd_conf->flags |= ACT_UPDOPER;
-    umkpasswd_conf->user = optarg;
-   break;
-
-   case 'm':
-    umkpasswd_conf->mech = optarg;
-   break;
-
-   case 'l':
-    load_mechs();
-    show_mechs();
-    exit(0);
-   break;
-
-   case 'd':
-    umkpasswd_conf->debuglevel = atoi(optarg);
-    if (umkpasswd_conf->debuglevel < 0)
-     umkpasswd_conf->debuglevel = 0;
-   break;
-
-   case 'c':
-    umkpasswd_conf->conf = optarg;
-   break;
-
-   case 'a':
-    if(umkpasswd_conf->flags & ACT_UPDOPER) 
-    {
-     fprintf(stderr, "-a and -u are mutually exclusive.  Use either or neither.\n");
-     abort(); /* b0rk b0rk b0rk */
-    }
-
-    umkpasswd_conf->flags |= ACT_ADDOPER;
-    umkpasswd_conf->user = optarg;
-   break;
-
-   default:
-    /* unknown option - spit out syntax and b0rk */
-    show_help();
-    exit(1);
-   break;
+    mech = mech->next;
   }
- }
+}
 
- Debug((DEBUG_DEBUG, "flags = %d", umkpasswd_conf->flags));
- Debug((DEBUG_DEBUG, "operclass = %d", umkpasswd_conf->operclass));
- Debug((DEBUG_DEBUG, "debug = %d", umkpasswd_conf->debuglevel));
+char *crypt_pass(const char *pw, const char *mech)
+{
+  crypt_mechs_t *crypt_mech;
+  char *salt, *untagged, *tagged;
 
- if (NULL != umkpasswd_conf->mech)
-  Debug((DEBUG_DEBUG, "mech = %s", umkpasswd_conf->mech));
- else
-  Debug((DEBUG_DEBUG, "mech is unset"));
+  assert(NULL != pw);
+  assert(NULL != mech);
 
- if (NULL != umkpasswd_conf->conf)
-  Debug((DEBUG_DEBUG, "conf = %s", umkpasswd_conf->conf));
- else
-  Debug((DEBUG_DEBUG, "conf is unset"));
+  Debug((DEBUG_DEBUG, "pw = %s\n", pw));
+  Debug((DEBUG_DEBUG, "mech = %s\n", mech));
 
- if (NULL != umkpasswd_conf->user)
-  Debug((DEBUG_DEBUG, "user = %s", umkpasswd_conf->user));
- else
-  Debug((DEBUG_DEBUG, "user is unset"));
+  if (NULL == (crypt_mech = hunt_mech(mech)))
+  {
+    printf("Unable to find mechanism %s\n", mech);
+    return NULL;
+  }
 
-/* anything left over should be password */
-return argv[optind];
+  salt = make_salt(default_salts);
+
+  untagged = (char *)CryptFunc(crypt_mech->mech)(pw, salt);
+  tagged = (char *)MyMalloc(strlen(untagged) + CryptTokSize(crypt_mech->mech) + 1);
+  memset(tagged, 0, strlen(untagged) + CryptTokSize(crypt_mech->mech) + 1);
+  strncpy(tagged, CryptTok(crypt_mech->mech), CryptTokSize(crypt_mech->mech));
+  strncpy(tagged + CryptTokSize(crypt_mech->mech), untagged, strlen(untagged));
+
+  return tagged;
+}
+
+char *parse_arguments(int argc, char **argv)
+{
+  int len = 0, c = 0;
+  const char *options = "a:d:lm:u:y:5";
+
+  umkpasswd_conf = (umkpasswd_conf_t *)MyMalloc(sizeof(umkpasswd_conf_t));
+
+  umkpasswd_conf->flags = 0;
+  umkpasswd_conf->debuglevel = 0;
+  umkpasswd_conf->operclass = 0;
+  umkpasswd_conf->user = NULL;
+  umkpasswd_conf->mech = NULL;
+
+  len = strlen(DPATH) + strlen(CPATH) + 2;
+  umkpasswd_conf->conf = (char *)MyMalloc(len * sizeof(char));
+  memset(umkpasswd_conf->conf, 0, len * sizeof(char));
+  ircd_strncpy(umkpasswd_conf->conf, DPATH, strlen(DPATH));
+  *((umkpasswd_conf->conf) + strlen(DPATH)) = '/';
+  ircd_strncpy((umkpasswd_conf->conf) + strlen(DPATH) + 1, CPATH, strlen(CPATH));
+
+  len = 0;
+
+  while ((EOF != (c = getopt(argc, argv, options))) && !len)
+  {
+    switch (c)
+    {
+    case '5':
+    {
+      char t1[1024];
+      while (fgets(t1, sizeof(t1), stdin))
+        sum(t1);
+    }
+      exit(0);
+
+    case 'y':
+      umkpasswd_conf->operclass = atoi(optarg);
+      if (umkpasswd_conf->operclass < 0)
+        umkpasswd_conf->operclass = 0;
+      break;
+
+    case 'u':
+      if (umkpasswd_conf->flags & ACT_ADDOPER)
+      {
+        fprintf(stderr, "-a and -u are mutually exclusive.  Use either or neither.\n");
+        abort(); /* b0rk b0rk b0rk */
+      }
+
+      umkpasswd_conf->flags |= ACT_UPDOPER;
+      umkpasswd_conf->user = optarg;
+      break;
+
+    case 'm':
+      umkpasswd_conf->mech = optarg;
+      break;
+
+    case 'l':
+      load_mechs();
+      show_mechs();
+      exit(0);
+      break;
+
+    case 'd':
+      umkpasswd_conf->debuglevel = atoi(optarg);
+      if (umkpasswd_conf->debuglevel < 0)
+        umkpasswd_conf->debuglevel = 0;
+      break;
+
+    case 'c':
+      umkpasswd_conf->conf = optarg;
+      break;
+
+    case 'a':
+      if (umkpasswd_conf->flags & ACT_UPDOPER)
+      {
+        fprintf(stderr, "-a and -u are mutually exclusive.  Use either or neither.\n");
+        abort(); /* b0rk b0rk b0rk */
+      }
+
+      umkpasswd_conf->flags |= ACT_ADDOPER;
+      umkpasswd_conf->user = optarg;
+      break;
+
+    default:
+      /* unknown option - spit out syntax and b0rk */
+      show_help();
+      exit(1);
+      break;
+    }
+  }
+
+  Debug((DEBUG_DEBUG, "flags = %d", umkpasswd_conf->flags));
+  Debug((DEBUG_DEBUG, "operclass = %d", umkpasswd_conf->operclass));
+  Debug((DEBUG_DEBUG, "debug = %d", umkpasswd_conf->debuglevel));
+
+  if (NULL != umkpasswd_conf->mech)
+    Debug((DEBUG_DEBUG, "mech = %s", umkpasswd_conf->mech));
+  else
+    Debug((DEBUG_DEBUG, "mech is unset"));
+
+  if (NULL != umkpasswd_conf->conf)
+    Debug((DEBUG_DEBUG, "conf = %s", umkpasswd_conf->conf));
+  else
+    Debug((DEBUG_DEBUG, "conf is unset"));
+
+  if (NULL != umkpasswd_conf->user)
+    Debug((DEBUG_DEBUG, "user = %s", umkpasswd_conf->user));
+  else
+    Debug((DEBUG_DEBUG, "user is unset"));
+
+  /* anything left over should be password */
+  return argv[optind];
 }
 
 int main(int argc, char **argv)
 {
-char* pw, *crypted_pw;
+  char *pw, *crypted_pw;
 
- crypt_mechs_root = (crypt_mechs_t*)MyMalloc(sizeof(crypt_mechs_t));
- crypt_mechs_root->mech = NULL;
- crypt_mechs_root->next = crypt_mechs_root->prev = NULL;
+  crypt_mechs_root = (crypt_mechs_t *)MyMalloc(sizeof(crypt_mechs_t));
+  crypt_mechs_root->mech = NULL;
+  crypt_mechs_root->next = crypt_mechs_root->prev = NULL;
 
- if (argc < 2)
- {
-  show_help();
-  exit(0);
- }
+  if (argc < 2)
+  {
+    show_help();
+    exit(0);
+  }
 
- pw = parse_arguments(argc, argv);
- load_mechs();
+  pw = parse_arguments(argc, argv);
+  load_mechs();
 
- if (NULL == umkpasswd_conf->mech)
- {
-  fprintf(stderr, "No mechanism specified.\n");
-  abort();
- }
+  if (NULL == umkpasswd_conf->mech)
+  {
+    fprintf(stderr, "No mechanism specified.\n");
+    abort();
+  }
 
- if (NULL == pw)
- {
-  pw = getpass("Password: ");
- }
- crypted_pw = crypt_pass(pw, umkpasswd_conf->mech);
+  if (NULL == pw)
+  {
+    pw = getpass("Password: ");
+  }
+  crypted_pw = crypt_pass(pw, umkpasswd_conf->mech);
 
- printf("Crypted Pass: %s\n", crypted_pw);
- memset(pw, 0, strlen(pw));
+  printf("Crypted Pass: %s\n", crypted_pw);
+  memset(pw, 0, strlen(pw));
 
-return 0;
+  return 0;
 }
