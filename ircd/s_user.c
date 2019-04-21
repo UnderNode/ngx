@@ -380,7 +380,10 @@ int register_user(struct Client *cptr, struct Client *sptr)
       umodev[2] = tmpstr;
       set_user_mode(cptr, sptr, 3, umodev, ALLOWMODES_ANY);
     }
-
+    /**
+     * Host hiding for all people ;)
+     * */
+    SetHiddenHost(sptr);
     SetUser(sptr);
     cli_handler(sptr) = CLIENT_HANDLER;
     SetLocalNumNick(sptr);
@@ -454,8 +457,8 @@ int register_user(struct Client *cptr, struct Client *sptr)
    * their hostmask here.  Calling hide_hostmask() from IAuth's
    * account assignment causes a numeric reply during registration.
    */
-  if (HasHiddenHost(sptr))
-    hide_hostmask(sptr, FLAG_HIDDENHOST);
+  // if (HasHiddenHost(sptr))
+  // hide_hostmask(sptr, FLAG_HIDDENHOST);
   if (IsInvisible(sptr))
     ++UserStats.inv_clients;
   if (IsOper(sptr))
@@ -490,15 +493,19 @@ int register_user(struct Client *cptr, struct Client *sptr)
     /* To avoid sending +r to the client due to auth-on-connect, set
      * the "old" FLAG_ACCOUNT bit to match the client's value.
      */
-    if (IsAccount(cptr))
-      FlagSet(&flags, FLAG_ACCOUNT);
-    else
-      FlagClr(&flags, FLAG_ACCOUNT);
+    if (IsAccount(cptr)) 
+    {
+      sendrawto_one(cptr, ":N!services@nicknames.undernode.com NOTICE %s :*** Wellcome to home ;) (complete registration).",
+                  (EmptyString(cli_name(sptr)) ? "*" : cli_name(sptr)));
+    }
     client_set_privs(sptr, NULL, 0);
     send_umode(cptr, sptr, &flags, ALL_UMODES);
-    if ((cli_snomask(sptr) != SNO_DEFAULT) && HasFlag(sptr, FLAG_SERVNOTICE))
+    if ((cli_snomask(sptr) != SNO_DEFAULT) && HasFlag(sptr, FLAG_SERVNOTICE)) 
+    {
       send_reply(sptr, RPL_SNOMASK, cli_snomask(sptr), cli_snomask(sptr));
+    }
   }
+  hide_hostmask(sptr);
   return 0;
 }
 
@@ -615,7 +622,7 @@ int set_nick_name(struct Client *cptr, struct Client *sptr,
         send_reply(cptr, ERR_NICKTOOFAST, parv[1],
                    cli_nextnick(cptr) - CurrentTime);
         /* Send error message */
-        sendcmdto_one(cptr, CMD_NICK, cptr, "%s", cli_name(cptr));
+        //sendcmdto_one(cptr, CMD_NICK, cptr, "%s", cli_name(cptr));
         /* bounce NICK to user */
         return 0; /* ignore nick change! */
       }
@@ -914,32 +921,9 @@ void send_user_info(struct Client *sptr, char *names, int rpl, InfoFormatter fmt
  * @param[in] flag Some flag that affects host-hiding (FLAG_HIDDENHOST, FLAG_ACCOUNT).
  * @return Zero.
  */
-int hide_hostmask(struct Client *cptr, unsigned int flag)
+int hide_hostmask(struct Client *cptr)
 {
-  struct Membership *chan;
 
-  switch (flag)
-  {
-  case FLAG_HIDDENHOST:
-    /* Local users cannot set +x unless FEAT_HOST_HIDING is true. */
-    if (MyConnect(cptr) && !feature_bool(FEAT_HOST_HIDING))
-      return 0;
-    break;
-  case FLAG_ACCOUNT:
-    /* Invalidate all bans against the user so we check them again */
-    for (chan = (cli_user(cptr))->channel; chan;
-         chan = chan->next_channel)
-      ClearBanValid(chan);
-    break;
-  default:
-    return 0;
-  }
-
-  SetFlag(cptr, flag);
-  if (!HasFlag(cptr, FLAG_HIDDENHOST) || !HasFlag(cptr, FLAG_ACCOUNT))
-    return 0;
-
-  sendcmdto_common_channels_butone(cptr, CMD_QUIT, cptr, ":Registered");
   ircd_snprintf(0, cli_user(cptr)->host, HOSTLEN, "%s.%s",
                 cli_user(cptr)->account, feature_str(FEAT_HIDDEN_HOST));
 
@@ -947,26 +931,6 @@ int hide_hostmask(struct Client *cptr, unsigned int flag)
   if (MyConnect(cptr))
     send_reply(cptr, RPL_HOSTHIDDEN, cli_user(cptr)->host);
 
-  /*
-   * Go through all channels the client was on, rejoin him
-   * and set the modes, if any
-   */
-  for (chan = cli_user(cptr)->channel; chan; chan = chan->next_channel)
-  {
-    if (IsZombie(chan))
-      continue;
-    /* Send a JOIN unless the user's join has been delayed. */
-    if (!IsDelayedJoin(chan))
-      sendcmdto_channel_butserv_butone(cptr, CMD_JOIN, chan->channel, cptr, 0,
-                                       "%H", chan->channel);
-    if (IsChanOp(chan) && HasVoice(chan))
-      sendcmdto_channel_butserv_butone(&his, CMD_MODE, chan->channel, cptr, 0,
-                                       "%H +ov %C %C", chan->channel, cptr,
-                                       cptr);
-    else if (IsChanOp(chan) || HasVoice(chan))
-      sendcmdto_channel_butserv_butone(&his, CMD_MODE, chan->channel, cptr, 0,
-                                       "%H +%c %C", chan->channel, IsChanOp(chan) ? 'o' : 'v', cptr);
-  }
   return 0;
 }
 
@@ -1005,8 +969,9 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
     *m++ = '+';
     for (i = 0; i < USERMODELIST_SIZE; i++)
     {
-      if (HasFlag(sptr, userModeList[i].flag) &&
-          userModeList[i].flag != FLAG_ACCOUNT)
+      if (HasFlag(sptr, userModeList[i].flag) /*&&
+          userModeList[i].flag != FLAG_ACCOUNT*/
+      )
         *m++ = userModeList[i].c;
     }
     *m = '\0';
@@ -1197,7 +1162,7 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
     ircd_strncpy(cli_user(sptr)->account, account, len);
   }
   if (!FlagHas(&setflags, FLAG_HIDDENHOST) && do_host_hiding && allow_modes != ALLOWMODES_DEFAULT)
-    hide_hostmask(sptr, FLAG_HIDDENHOST);
+    hide_hostmask(sptr);
 
   if (IsRegistered(sptr))
   {

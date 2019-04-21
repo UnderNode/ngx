@@ -2,6 +2,7 @@
 #include "s_debug.h"
 #include "ircd_defs.h"
 #include "ircd_string.h"
+#include "ircd_alloc.h"
 #include <string.h>
 #include <strings.h>
 
@@ -9,10 +10,26 @@
  * MySQL Pointer connection
  * */
 MYSQL *conn;
+/**
+ * database pointer
+ * */
+struct ddb *db = (struct ddb *)NULL;
 
-int ddb_init(struct ddb *db)
+int ddb_init(void)
 {
+    /**
+     * Allocator for database config
+     * */
+    db = (struct ddb *)MyMalloc(sizeof(struct ddb));
+
+    db->host = "localhost";
+    db->user = "undernode";
+    db->pass = "eik9159a";
+    db->dbname = "undernode";
+    db->port = 3306;
+
     conn = mysql_init(NULL);
+
     if (!conn)
     {
         Debug((DEBUG_ERROR, "Error init MySQL Client (%s)", mysql_errno(conn)));
@@ -32,8 +49,9 @@ int ddb_init(struct ddb *db)
     }
     return 1;
 }
-void finish_mysql_connection(void)
+void ddb_end_transaction(void)
 {
+    MyFree(db);
     mysql_close(conn);
 }
 
@@ -52,7 +70,6 @@ int ddb_match_nickname(char *nick, char *passwd)
 
     if (!stmt)
     {
-        Debug((DEBUG_INFO, "sin stmt %s", mysql_stmt_error(stmt)));
         return MYSQL_DB_ERROR;
     }
 
@@ -77,19 +94,19 @@ int ddb_match_nickname(char *nick, char *passwd)
 
     if (mysql_stmt_bind_param(stmt, params))
     {
-        Debug((DEBUG_INFO, "no se puede hacer binding %s", mysql_stmt_error(stmt)));
+        mysql_stmt_free_result(stmt);
         return MYSQL_DB_ERROR;
     }
 
     if (mysql_stmt_execute(stmt))
     {
-        Debug((DEBUG_INFO, "no se puede ejecutar query %s", mysql_stmt_error(stmt)));
+        mysql_stmt_free_result(stmt);
         return MYSQL_DB_ERROR;
     }
 
     if (mysql_stmt_store_result(stmt))
     {
-        Debug((DEBUG_INFO, "no se puede almacenar resultados %s", mysql_stmt_error(stmt)));
+        mysql_stmt_free_result(stmt);
         return MYSQL_DB_ERROR;
     }
     char nickbuf[NICKLEN + 1];
@@ -108,7 +125,7 @@ int ddb_match_nickname(char *nick, char *passwd)
 
     if (mysql_stmt_bind_result(stmt, params))
     {
-        Debug((DEBUG_INFO, "bind result failed %s", mysql_stmt_error(stmt)));
+        mysql_stmt_free_result(stmt);
         return MYSQL_DB_ERROR;
     }
 
@@ -118,12 +135,85 @@ int ddb_match_nickname(char *nick, char *passwd)
 
     if (EmptyString(nickbuf) || EmptyString(passbuf))
     {
+        mysql_stmt_free_result(stmt);
         return MYSQL_DB_TRYAGAIN;
     }
 
     mysql_stmt_free_result(stmt);
 
-    finish_mysql_connection();
+    return MYSQL_DB_OK;
+}
+int ddb_fetch_nick(char *nick)
+{
+
+    /**
+    * MySQL Pointer statement
+     * */
+    MYSQL_STMT *stmt;
+    /**
+    * MySQL Pointer bind params
+    * */
+    MYSQL_BIND params[1];
+
+    stmt = mysql_stmt_init(conn);
+
+    if (!stmt)
+    {
+        return MYSQL_DB_ERROR;
+    }
+
+    mysql_stmt_prepare(stmt, STMT_FETCH_NICK, (unsigned long)strlen(STMT_FETCH_NICK));
+
+    memset(params, 0, sizeof(params));
+
+    unsigned long n = strlen(nick);
+
+    params[0].buffer_type = MYSQL_TYPE_STRING;
+    params[0].buffer = nick;
+    params[0].buffer_length = strlen(nick);
+    params[0].is_null = 0;
+    params[0].length = &n;
+
+    if (mysql_stmt_bind_param(stmt, params))
+    {
+        mysql_stmt_free_result(stmt);
+        return MYSQL_DB_ERROR;
+    }
+    if (mysql_stmt_execute(stmt))
+    {
+        mysql_stmt_free_result(stmt);
+        return MYSQL_DB_ERROR;
+    }
+    if (mysql_stmt_store_result(stmt))
+    {
+        mysql_stmt_free_result(stmt);
+        return MYSQL_DB_ERROR;
+    }
+    char nickbuf[NICKLEN + 1];
+
+    memset(nickbuf, 0, sizeof(nickbuf));
+
+    params[0].buffer = nickbuf;
+    params[0].buffer_length = strlen(nick);
+    params[0].length = &n;
+
+    if (mysql_stmt_bind_result(stmt, params))
+    {
+        mysql_stmt_free_result(stmt);
+        return MYSQL_DB_ERROR;
+    }
+
+    mysql_stmt_fetch(stmt);
+
+    mysql_stmt_fetch_column(stmt, params, 0, 0);
+
+    if (EmptyString(nickbuf))
+    {
+        mysql_stmt_free_result(stmt);
+        return MYSQL_DB_TRYAGAIN;
+    }
+
+    mysql_stmt_free_result(stmt);
 
     return MYSQL_DB_OK;
 }

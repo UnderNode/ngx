@@ -320,6 +320,7 @@ extern const struct Numeric* get_error_numeric(int err);
  * commands they come from.
  */
 /*      ERR_FIRSTERROR       400	unused */
+#define ERR_NICKREGISTERED	 400 /* Undernode extension */ 
 #define ERR_NOSUCHNICK       401
 #define ERR_NOSUCHSERVER     402
 #define ERR_NOSUCHCHANNEL    403
@@ -469,6 +470,7 @@ extern const struct Numeric* get_error_numeric(int err);
 #define ERR_NOMANAGER        566	/* Undernet extension */
 #define ERR_UPASS_SAME_APASS 567        /* Undernet extension */
 #define ERR_LASTERROR        568
+#define ERR_NICKPASSWDMISMATCH	569 /* Undernode extension */
 
 /*	RPL_LOGON	     600	dalnet,unreal
 	RPL_LOGOFF           601	dalnet,unreal

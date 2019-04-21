@@ -87,6 +87,7 @@
 #include "ircd.h"
 #include "ircd_chattr.h"
 #include "ircd_features.h"
+#include "ircd_relay.h"
 #include "ircd_log.h"
 #include "ircd_reply.h"
 #include "ircd_string.h"
@@ -148,7 +149,7 @@ int m_nick(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
   char nick[NICKLEN + 2];
   char *arg;
   char *s;
-  int AUTH_SUCCESS = 0;
+
   assert(0 != cptr);
   assert(cptr == sptr);
 
@@ -169,157 +170,195 @@ int m_nick(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
    */
   arg = parv[1];
 
-  Debug((DEBUG_INFO, "Found %d params.", parc));
-  for (int i = 0; i < parc; i++)
-  {
-    if (strlen(parv[i]))
-      Debug((DEBUG_INFO, "Params given from user -> %s", parv[i]));
-  }
   char *pass = strchr(arg, ':');
+
   if (pass)
   {
     *pass++;
+
     int p = (pass - arg);
+
     arg[p - 1] = '\0';
-    Debug((DEBUG_INFO, "Working with password provide '%s' more is %s", pass, arg));
-    struct ddb *db = (struct ddb *)malloc(sizeof(struct ddb));
 
-    db->host = "localhost";
-    db->user = "undernode";
-    db->pass = "eik9159a";
-    db->dbname = "undernode";
-    db->port = 3306;
+    if (strlen(arg) > IRCD_MIN(NICKLEN, feature_int(FEAT_NICKLEN)))
+      arg[IRCD_MIN(NICKLEN, feature_int(FEAT_NICKLEN))] = '\0';
 
-    Debug((DEBUG_INFO, "Connection with mysql is %d", ddb_init(db)));
+    if ((s = strchr(arg, '~')))
+      *s = '\0';
 
-    int ok = -1;
+    strcpy(nick, arg);
 
-    if ((ok = ddb_match_nickname(arg, pass)))
+    if (0 == do_nick_name(nick))
     {
-      Debug((DEBUG_INFO, "Password correct! %d %s", ok, pass));
-      AUTH_SUCCESS = 1;
+      send_reply(sptr, ERR_ERRONEUSNICKNAME, nick);
+      return 0;
     }
-    else
+
+    if (isNickJuped(nick))
     {
-      Debug((DEBUG_INFO, "Password mismatch? %d", ok));
+      send_reply(sptr, ERR_NICKNAMEINUSE, nick);
+      return 0; /* NICK message ignored */
     }
+    if (!(acptr = FindClient(nick)))
+    {
+      if (ddb_init())
+      {
+        if (ddb_fetch_nick(nick) == MYSQL_DB_OK)
+        {
+          if (ddb_match_nickname(nick, pass) == MYSQL_DB_OK)
+          {
+            SetAccount(sptr);
+            ircd_strncpy(cli_user(sptr)->account, nick, ACCOUNTLEN);
+            cli_user(sptr)->acc_create = time(NULL);
+            sendcmdto_serv_butone(cptr, CMD_ACCOUNT, sptr,
+                                  cli_user(sptr)->acc_create ? "%C %s %Tu" : "%C %s",
+                                  sptr, cli_user(sptr)->account,
+                                  cli_user(sptr)->acc_create);
+            set_nick_name(cptr, sptr, nick, parc, parv);
+            if (IsUser(sptr))
+            {
+              sendrawto_one(cptr, ":N!services@nicknames.undernode.com NOTICE %s :*** Wellcome to home ;).",
+                            (EmptyString(cli_name(sptr)) ? "*" : cli_name(sptr)));
+            }
+            ddb_end_transaction();
+            return 0;
+          }
+          else
+          {
+            send_reply(sptr, ERR_NICKPASSWDMISMATCH);
+            ddb_end_transaction();
+            return 0;
+          }
+        }
+        else
+        {
+          ddb_end_transaction();
+          return set_nick_name(cptr, sptr, nick, parc, parv);
+        }
+      }
+      else
+      {
+        sendrawto_one(cptr, ":N!services@nicknames.undernode.com NOTICE %s :*** Unknow internal error, contact to support.",
+                      (EmptyString(cli_name(sptr)) ? "*" : cli_name(sptr)));
+        return 0;
+      }
+    }
+    if (IsServer(acptr))
+    {
+      send_reply(sptr, ERR_NICKNAMEINUSE, nick);
+      return 0; /* NICK message ignored */
+    }
+    if (acptr == sptr)
+    {
+      if (0 != strcmp(cli_name(acptr), nick))
+      {
+        /**
+         * Ignore check password validation, send nick change.
+         * */
+        return set_nick_name(cptr, sptr, nick, parc, parv);
+      }
+      return 0;
+    }
+    assert(acptr != sptr);
+
+    if (IsUnknown(acptr) && MyConnect(acptr))
+    {
+      ++ServerStats->is_reg_collided;
+      IPcheck_connect_fail(acptr, 0);
+      exit_client(cptr, acptr, &me, "Overridden by other sign on");
+      return set_nick_name(cptr, sptr, nick, parc, parv);
+    }
+    send_reply(sptr, ERR_NICKNAMEINUSE, nick);
   }
-
-  if (strlen(arg) > IRCD_MIN(NICKLEN, feature_int(FEAT_NICKLEN)))
-    arg[IRCD_MIN(NICKLEN, feature_int(FEAT_NICKLEN))] = '\0';
-
-  if ((s = strchr(arg, '~')))
-    *s = '\0';
-
-  strcpy(nick, arg);
-
-  /*
-   * If do_nick_name() returns a null name then reject it.
-   */
-  if (0 == do_nick_name(nick))
+  else
   {
-    send_reply(sptr, ERR_ERRONEUSNICKNAME, arg);
-    return 0;
-  }
 
-  /* 
+    if (strlen(arg) > IRCD_MIN(NICKLEN, feature_int(FEAT_NICKLEN)))
+      arg[IRCD_MIN(NICKLEN, feature_int(FEAT_NICKLEN))] = '\0';
+
+    if ((s = strchr(arg, '~')))
+      *s = '\0';
+
+    strcpy(nick, arg);
+
+    if (0 == do_nick_name(nick))
+    {
+      send_reply(sptr, ERR_ERRONEUSNICKNAME, arg);
+      return 0;
+    }
+
+    /* 
    * Check if this is a LOCAL user trying to use a reserved (Juped)
    * nick, if so tell him that it's a nick in use...
    */
-  if (isNickJuped(nick))
-  {
-    send_reply(sptr, ERR_NICKNAMEINUSE, nick);
-    return 0; /* NICK message ignored */
-  }
+    if (isNickJuped(nick))
+    {
+      send_reply(sptr, ERR_NICKNAMEINUSE, nick);
+      return 0; /* NICK message ignored */
+    }
 
-  if (!(acptr = FindClient(nick)))
-  {
-    /*
+    if (!(acptr = FindClient(nick)))
+    {
+      /*
      * No collisions, all clear...
      */
-    if (AUTH_SUCCESS)
-    {
-      ircd_strncpy(cli_user(sptr)->account, nick, ACCOUNTLEN);
-      hide_hostmask(sptr, FLAG_ACCOUNT);
-
-      cli_user(sptr)->acc_create = time(NULL);
-      /**
-       * Notificate to all servers
-       * */
-      sendcmdto_serv_butone(cptr, CMD_ACCOUNT, sptr,
-                            cli_user(sptr)->acc_create ? "%C %s %Tu" : "%C %s",
-                            sptr, cli_user(sptr)->account,
-                            cli_user(sptr)->acc_create);
-      /**
-       * Send minimal message to user
-       * */
-      sendrawto_one(cptr, ":%s!-@- NOTICE %s :*** Wellcome to home ;).",
-                    "NiCK", cli_name(sptr));
+      if (!ddb_init())
+      {
+        sendrawto_one(cptr, ":N!services@nicknames.undernode.com NOTICE %s :*** Unknow internal error, contact to support.",
+                      (EmptyString(cli_name(sptr)) ? "*" : cli_name(sptr)));
+        return 0;
+      }
+      if (ddb_fetch_nick(nick) == MYSQL_DB_OK)
+      {
+        send_reply(sptr, ERR_NICKREGISTERED, nick);
+        ddb_end_transaction();
+        return 0;
+      }
+      if (IsAccount(sptr))
+      {
+        ClearAccount(sptr);
+      }
+      return set_nick_name(cptr, sptr, nick, parc, parv);
     }
-    return set_nick_name(cptr, sptr, nick, parc, parv);
-  }
-  if (IsServer(acptr))
-  {
-    send_reply(sptr, ERR_NICKNAMEINUSE, nick);
-    return 0; /* NICK message ignored */
-  }
-  /*
+    if (IsServer(acptr))
+    {
+      send_reply(sptr, ERR_NICKNAMEINUSE, nick);
+      return 0; /* NICK message ignored */
+    }
+    /*
    * If acptr == sptr, then we have a client doing a nick
    * change between *equivalent* nicknames as far as server
    * is concerned (user is changing the case of his/her
    * nickname or somesuch)
    */
-  if (acptr == sptr)
-  {
-    /*
+    if (acptr == sptr)
+    {
+      /*
      * If acptr == sptr, then we have a client doing a nick
      * change between *equivalent* nicknames as far as server
      * is concerned (user is changing the case of his/her
      * nickname or somesuch)
      */
-    if (0 != strcmp(cli_name(acptr), nick))
-    {
+      if (0 != strcmp(cli_name(acptr), nick))
+      {
+
+        return set_nick_name(cptr, sptr, nick, parc, parv);
+      }
       /*
-       * Allows change of case in his/her nick
-       */
-      if (IsAccount(sptr))
-      {
-        ClearAccount(sptr);
-      }
-      if (AUTH_SUCCESS)
-      {
-        ircd_strncpy(cli_user(sptr)->account, nick, ACCOUNTLEN);
-        hide_hostmask(sptr, FLAG_ACCOUNT);
-
-        cli_user(sptr)->acc_create = time(NULL);
-
-        sendcmdto_serv_butone(cptr, CMD_ACCOUNT, sptr,
-                              cli_user(sptr)->acc_create ? "%C %s %Tu" : "%C %s",
-                              sptr, cli_user(sptr)->account,
-                              cli_user(sptr)->acc_create);
-        /**
-         * Send minimal message to user
-         * */
-        sendrawto_one(cptr, ":%s!-@- NOTICE %s :*** Wellcome to home ;).",
-                      "NiCK", cli_name(sptr));
-      }
-      return set_nick_name(cptr, sptr, nick, parc, parv);
-    }
-    /*
      * This is just ':old NICK old' type thing.
      * Just forget the whole thing here. There is
      * no point forwarding it to anywhere,
      * especially since servers prior to this
      * version would treat it as nick collision.
      */
-    return 0;
-  }
-  /*
+      return 0;
+    }
+    /*
    * Note: From this point forward it can be assumed that
    * acptr != sptr (point to different client structures).
    */
-  assert(acptr != sptr);
-  /*
+    assert(acptr != sptr);
+    /*
    * If the older one is "non-person", the new entry is just
    * allowed to overwrite it. Just silently drop non-person,
    * and proceed with the nick. This should take care of the
@@ -332,19 +371,20 @@ int m_nick(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
    * /nick foo, they should succeed and client 2 gets disconnected with
    * the message below.
    */
-  if (IsUnknown(acptr) && MyConnect(acptr))
-  {
-    ++ServerStats->is_reg_collided;
-    IPcheck_connect_fail(acptr, 0);
-    exit_client(cptr, acptr, &me, "Overridden by other sign on");
-    return set_nick_name(cptr, sptr, nick, parc, parv);
-  }
-  /*
+    if (IsUnknown(acptr) && MyConnect(acptr))
+    {
+      ++ServerStats->is_reg_collided;
+      IPcheck_connect_fail(acptr, 0);
+      exit_client(cptr, acptr, &me, "Overridden by other sign on");
+      return set_nick_name(cptr, sptr, nick, parc, parv);
+    }
+    /*
    * NICK is coming from local client connection. Just
    * send error reply and ignore the command.
    */
-  send_reply(sptr, ERR_NICKNAMEINUSE, nick);
-  return 0; /* NICK message ignored */
+    send_reply(sptr, ERR_NICKNAMEINUSE, nick);
+  }
+  return 0;
 }
 
 /*
