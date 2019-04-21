@@ -111,7 +111,7 @@ int m_info(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
       HUNTED_ISME)
 	return 0;
 
-  while (text[212])
+  while (*text)
   {
     send_reply(sptr, RPL_INFO, *text);
     text++;
