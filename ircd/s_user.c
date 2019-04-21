@@ -1048,19 +1048,20 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
 
   if (parc < 3)
   {
-    m = buf;
-    *m++ = '+';
-    for (i = 0; i < USERMODELIST_SIZE; i++)
-    {
-      if (HasFlag(sptr, userModeList[i].flag) /*&&
-          userModeList[i].flag != FLAG_ACCOUNT*/
-      )
-        *m++ = userModeList[i].c;
-    }
-    *m = '\0';
-    send_reply(sptr, RPL_UMODEIS, buf);
-    if (HasFlag(sptr, FLAG_SERVNOTICE) && MyConnect(sptr) && cli_snomask(sptr) != (unsigned int)(IsOper(sptr) ? SNO_OPERDEFAULT : SNO_DEFAULT))
-      send_reply(sptr, RPL_SNOMASK, cli_snomask(sptr), cli_snomask(sptr));
+    // m = buf;
+    // *m++ = '+';
+    // for (i = 0; i < USERMODELIST_SIZE; i++)
+    // {
+    //   if (HasFlag(sptr, userModeList[i].flag) /*&&
+    //       userModeList[i].flag != FLAG_ACCOUNT*/
+    //   )
+    //     *m++ = userModeList[i].c;
+    // }
+    // *m = '\0';
+    // send_reply(sptr, RPL_UMODEIS, buf);
+    // if (HasFlag(sptr, FLAG_SERVNOTICE) && MyConnect(sptr) && cli_snomask(sptr) != (unsigned int)(IsOper(sptr) ? SNO_OPERDEFAULT : SNO_DEFAULT))
+    //   send_reply(sptr, RPL_SNOMASK, cli_snomask(sptr), cli_snomask(sptr));
+    need_more_params(sptr, "MODE");
     return 0;
   }
 
@@ -1298,8 +1299,8 @@ char *umode_str(struct Client *cptr)
   int i;
   struct Flags c_flags = cli_flags(cptr);
 
-  if (!HasPriv(cptr, PRIV_PROPAGATE))
-    FlagClr(&c_flags, FLAG_OPER);
+  // if (!HasPriv(cptr, PRIV_PROPAGATE))
+  //   FlagClr(&c_flags, FLAG_OPER);
 
   for (i = 0; i < USERMODELIST_SIZE; ++i)
   {
@@ -1308,28 +1309,28 @@ char *umode_str(struct Client *cptr)
       *m++ = userModeList[i].c;
   }
 
-  if (IsAccount(cptr))
-  {
-    char *t = cli_user(cptr)->account;
+  // if (IsAccount(cptr))
+  // {
+  //   char *t = cli_user(cptr)->account;
 
-    *m++ = ' ';
-    while ((*m++ = *t++))
-      ; /* Empty loop */
+  //   *m++ = ' ';
+  //   while ((*m++ = *t++))
+  //     ; /* Empty loop */
 
-    if (cli_user(cptr)->acc_create)
-    {
-      char nbuf[20];
-      Debug((DEBUG_DEBUG, "Sending timestamped account in user mode for "
-                          "account \"%s\"; timestamp %Tu",
-             cli_user(cptr)->account,
-             cli_user(cptr)->acc_create));
-      ircd_snprintf(0, t = nbuf, sizeof(nbuf), ":%Tu",
-                    cli_user(cptr)->acc_create);
-      m--; /* back up over previous nul-termination */
-      while ((*m++ = *t++))
-        ; /* Empty loop */
-    }
-  }
+  //   if (cli_user(cptr)->acc_create)
+  //   {
+  //     char nbuf[20];
+  //     Debug((DEBUG_DEBUG, "Sending timestamped account in user mode for "
+  //                         "account \"%s\"; timestamp %Tu",
+  //            cli_user(cptr)->account,
+  //            cli_user(cptr)->acc_create));
+  //     ircd_snprintf(0, t = nbuf, sizeof(nbuf), ":%Tu",
+  //                   cli_user(cptr)->acc_create);
+  //     m--; /* back up over previous nul-termination */
+  //     while ((*m++ = *t++))
+  //       ; /* Empty loop */
+  //   }
+  // }
 
   *m = '\0';
 

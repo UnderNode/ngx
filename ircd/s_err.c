@@ -474,7 +474,7 @@ static Numeric replyTable[] = {
 /* 220 */
   { RPL_STATSWLINE, "W %s %d :%s", "220" },
 /* 221 */
-  { RPL_UMODEIS, "%s", "221" },
+  { RPL_UMODEIS, "%s :using modes +%s", "221" },
 /* 222 */
   { RPL_STATSJLINE, "J %s", "222" },
 /* 223 */
