@@ -29,6 +29,11 @@ struct UserStatistics {
   /* Global user mode changes: */
   unsigned int inv_clients;     /**< Registered invisible users. */
   unsigned int opers;           /**< Registered IRC operators. */
+  unsigned int bots;            /**< Registered bots */
+  unsigned int coders;          /**< Registered coders */
+  unsigned int admins;          /**< Registered admins */
+  unsigned int helpers;         /**< Registered helpers */
+
 
   /* Misc: */
   unsigned int channels;        /**< Existing channels. */
@@ -90,6 +95,33 @@ extern struct UserStatistics UserStats;
 #define Count_serverdisconnects(UserStats)              do { --UserStats.local_servers; --UserStats.servers; } while(0)
 /** Update counters when an unknown client disconnects. */
 #define Count_unknowndisconnects(UserStats)             (--UserStats.unknowns)
+
+/** Get total admins */
+#define Count_total_admins(UserStats)                     (UserStats.admins)
+/** Get total bots */
+#define Count_total_bots(UserStats)                       (UserStats.bots)
+/** Get total helpers */
+#define Count_total_helpers(UserStats)                    (UserStats.helpers)
+/** Get total coders */
+#define Count_total_coders(UserStats)                     (UserStats.coders)
+
+/** Get total admins */
+#define Update_admins_disconnect(UserStats)                     (--UserStats.admins)
+/** Get total bots */
+#define Update_bots_disconnect(UserStats)                       (--UserStats.bots)
+/** Get total helpers */
+#define Update_helpers_disconnect(UserStats)                    (--UserStats.helpers)
+/** Get total coders */
+#define Update_coders_disconnect(UserStats)                     (--UserStats.coders)
+
+/** Get total admins */
+#define Update_admins_connect(UserStats)                     (++UserStats.admins)
+/** Get total bots */
+#define Update_bots_connect(UserStats)                       (++UserStats.bots)
+/** Get total helpers */
+#define Update_helpers_connect(UserStats)                    (++UserStats.helpers)
+/** Get total coders */
+#define Update_coders_connect(UserStats)                     (++UserStats.coders)
 
 /*
  * Prototypes
