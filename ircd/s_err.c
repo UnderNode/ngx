@@ -474,7 +474,7 @@ static Numeric replyTable[] = {
 /* 220 */
   { RPL_STATSWLINE, "W %s %d :%s", "220" },
 /* 221 */
-  { RPL_UMODEIS, "%s :using modes +%s", "221" },
+  { RPL_UMODEIS, "%s :is using modes +%s", "221" },
 /* 222 */
   { RPL_STATSJLINE, "J %s", "222" },
 /* 223 */
@@ -832,7 +832,7 @@ static Numeric replyTable[] = {
 /* 399 */
   { 0 },
 /* 400 */
-  { ERR_NICKREGISTERED, ":*** Nickname registered, use /nick %s:<password_here> for use this nickname.", "400" },
+  { ERR_NICKREGISTERED, ":*** Nickname registered, use \002/nick %s:<password_here>\002 for use this nickname.", "400" },
 /* 401 */
   { ERR_NOSUCHNICK, "%s :No such nick", "401" },
 /* 402 */
@@ -1170,7 +1170,7 @@ static Numeric replyTable[] = {
 /* 568 */
   { 0 },
 /* 569 */
-  { ERR_NICKPASSWDMISMATCH, ":*** Password mismatch, try again.", "569" },
+  { ERR_NICKPASSWDMISMATCH, ":*** \002Password mismatch, try again.\002", "569" },
 /* 570 */
   { 0 },
 /* 571 */

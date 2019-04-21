@@ -57,6 +57,8 @@ struct hostent;
 struct Privs;
 struct AuthRequest;
 
+extern char* get_usermodes(void);
+
 /*
  * Structures
  *
@@ -89,8 +91,6 @@ typedef unsigned long flagpage_t;
 /** Clear a flag in a flagset. */
 #define FlagClr(set,flag) ((set)->bits[FLAGSET_INDEX(flag)] &= ~FLAGSET_MASK(flag))
 
-/** String containing valid user modes, in no particular order. */
-#define infousermodes "diOoswkgx"
 
 /** Operator privileges. */
 enum Priv
@@ -165,6 +165,10 @@ enum Flag
     FLAG_DEBUG,                     /**< send global debug/anti-hack info */
     FLAG_ACCOUNT,                   /**< account name has been set */
     FLAG_HIDDENHOST,                /**< user's host is hidden */
+    FLAG_HELPER,                    /**< indicate that user is staff member */
+    FLAG_ADMIN,                     /**< indicate that user is admin */
+    FLAG_BOT,                       /**< indicate that user is bot */
+    FLAG_CODER,                     /**< indicate that user is coder */
     FLAG_LAST_FLAG,                 /**< number of flags */
     FLAG_LOCAL_UMODES = FLAG_LOCOP, /**< First local mode flag */
     FLAG_GLOBAL_UMODES = FLAG_OPER  /**< First global mode flag */
@@ -591,6 +595,15 @@ struct Client {
 #define IsHiddenHost(x)         HasFlag(x, FLAG_HIDDENHOST)
 /** Return non-zero if the client has an active PING request. */
 #define IsPingSent(x)           HasFlag(x, FLAG_PINGSENT)
+/** Return non-zero if the client has set mode +a (admin) */
+#define IsAdmin(x)              HasFlag(x, FLAG_ADMIN)
+/** Return non-zero if the client has set mode +h (helper) */
+#define IsHelper(x)             HasFlag(x, FLAG_HELPER)
+/** Return non-zero if the client has set mode +B (bot) */
+#define IsBot(x)                HasFlag(x, FLAG_BOT)
+/** Return non-zero if the client has set mode +c (coder) */
+#define IsCoder(x)              HasFlag(x, FLAG_CODER)
+
 
 /** Return non-zero if the client has operator or server privileges. */
 #define IsPrivileged(x)         (IsAnOper(x) || IsServer(x))
@@ -637,6 +650,15 @@ struct Client {
 #define SetHiddenHost(x)        SetFlag(x, FLAG_HIDDENHOST)
 /** Mark a client as having a pending PING. */
 #define SetPingSent(x)          SetFlag(x, FLAG_PINGSENT)
+/** Mark a client as having mode +a (admin). */
+#define SetAdmin(x)             SetFlag(x, FLAG_ADMIN)
+/** Mark a client as having mode +h (helper). */
+#define SetHelper(x)            SetFlag(x, FLAG_HELPER)
+/** Mark a client as having mode +B (bot) */
+#define SetBot(x)               SetFlag(x, FLAG_BOT)
+/** Mark a client as having mode +c (coder) */
+#define SetCoder(x)             SetFlag(x, FLAG_CODER)
+
 
 /** Return non-zero if \a sptr sees \a acptr as an operator. */
 #define SeeOper(sptr,acptr) (IsAnOper(acptr) && (HasPriv(acptr, PRIV_DISPLAY) \
@@ -674,6 +696,14 @@ struct Client {
 #define ClearHub(x)             ClrFlag(x, FLAG_HUB)
 /** Clear the client's Account flag */
 #define ClearAccount(x)         ClrFlag(x, FLAG_ACCOUNT)
+/** Clear the client's Admin flag */
+#define ClearAdmin(x)             ClrFlag(x, FLAG_ADMIN)
+/** Clear the client's Helper flag */
+#define ClearHelper(x)            ClrFlag(x, FLAG_HELPER)
+/** Clear the client's Bot flag */
+#define ClearBot(x)               ClrFlag(x, FLAG_BOT)
+/** Clear the client's Coder flag */
+#define ClearCoder(x)             ClrFlag(x, FLAG_CODER)
 
 /* free flags */
 #define FREEFLAG_SOCKET	0x0001	/**< socket needs to be freed */

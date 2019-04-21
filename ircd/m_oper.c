@@ -104,7 +104,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-int oper_password_match(const char* to_match, const char* passwd)
+int oper_password_match(const char *to_match, const char *passwd)
 {
   char *crypted;
   int res;
@@ -122,7 +122,7 @@ int oper_password_match(const char* to_match, const char* passwd)
   crypted = ircd_crypt(to_match, passwd);
 
   if (!crypted)
-   return 0;
+    return 0;
   res = strcmp(crypted, passwd);
   MyFree(crypted);
   return 0 == res;
@@ -131,16 +131,16 @@ int oper_password_match(const char* to_match, const char* passwd)
 /*
  * m_oper - generic message handler
  */
-int m_oper(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
+int m_oper(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
-  struct ConfItem* aconf;
-  char*            name;
-  char*            password;
+  struct ConfItem *aconf;
+  char *name;
+  char *password;
 
   assert(0 != cptr);
   assert(cptr == sptr);
 
-  name     = parc > 1 ? parv[1] : 0;
+  name = parc > 1 ? parv[1] : 0;
   password = parc > 2 ? parv[2] : 0;
 
   if (EmptyString(name) || EmptyString(password))
@@ -151,7 +151,7 @@ int m_oper(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   {
     send_reply(sptr, ERR_NOOPERHOST);
     sendto_opmask_butone(0, SNO_OLDREALOP, "Failed OPER attempt by %s (%s@%s)",
-			 parv[0], cli_user(sptr)->username, cli_sockhost(sptr));
+                         parv[0], cli_user(sptr)->username, cli_sockhost(sptr));
     return 0;
   }
   assert(0 != (aconf->status & CONF_OPERATOR));
@@ -160,35 +160,31 @@ int m_oper(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   {
     struct Flags old_mode = cli_flags(sptr);
 
-    if (ACR_OK != attach_conf(sptr, aconf)) {
+    if (ACR_OK != attach_conf(sptr, aconf))
+    {
       send_reply(sptr, ERR_NOOPERHOST);
       sendto_opmask_butone(0, SNO_OLDREALOP, "Failed OPER attempt by %s "
-			   "(%s@%s)", parv[0], cli_user(sptr)->username,
-			   cli_sockhost(sptr));
+                                             "(%s@%s)",
+                           parv[0], cli_user(sptr)->username,
+                           cli_sockhost(sptr));
       return 0;
     }
-    SetLocOp(sptr);
-    client_set_privs(sptr, aconf, 1);
-    if (HasPriv(sptr, PRIV_PROPAGATE))
-    {
-      ClearLocOp(sptr);
-      SetOper(sptr);
-      ++UserStats.opers;
-    }
+    SetOper(sptr);
+    ++UserStats.opers;
     cli_handler(cptr) = OPER_HANDLER;
 
     SetFlag(sptr, FLAG_WALLOP);
     SetFlag(sptr, FLAG_SERVNOTICE);
     SetFlag(sptr, FLAG_DEBUG);
-    
+    SetFlag(sptr, FLAG_CHSERV);
+
     set_snomask(sptr, SNO_OPERDEFAULT, SNO_ADD);
     cli_max_sendq(sptr) = 0; /* Get the sendq from the oper's class */
     send_umode_out(cptr, sptr, &old_mode, HasPriv(sptr, PRIV_PROPAGATE));
     send_reply(sptr, RPL_YOUREOPER);
 
-    sendto_opmask_butone(0, SNO_OLDSNO, "%s (%s@%s) is now operator (%c)",
-			 parv[0], cli_user(sptr)->username, cli_sockhost(sptr),
-			 IsOper(sptr) ? 'O' : 'o');
+    sendto_opmask_butone(0, SNO_OLDSNO, "%s (%s@%s) is now operator",
+                         parv[0], cli_user(sptr)->username, cli_sockhost(sptr));
 
     log_write(LS_OPER, L_INFO, 0, "OPER (%s) by (%#C)", name, sptr);
   }
@@ -196,7 +192,7 @@ int m_oper(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   {
     send_reply(sptr, ERR_PASSWDMISMATCH);
     sendto_opmask_butone(0, SNO_OLDREALOP, "Failed OPER attempt by %s (%s@%s)",
-			 parv[0], cli_user(sptr)->username, cli_sockhost(sptr));
+                         parv[0], cli_user(sptr)->username, cli_sockhost(sptr));
   }
   return 0;
 }
@@ -204,7 +200,7 @@ int m_oper(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 /*
  * ms_oper - server message handler
  */
-int ms_oper(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
+int ms_oper(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   assert(0 != cptr);
   assert(IsServer(cptr));
@@ -215,6 +211,7 @@ int ms_oper(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   {
     ++UserStats.opers;
     SetFlag(sptr, FLAG_OPER);
+    SetFlag(sptr, FLAG_CHSERV);
     sendcmdto_serv_butone(sptr, CMD_MODE, cptr, "%s :+o", parv[0]);
   }
   return 0;
@@ -223,7 +220,7 @@ int ms_oper(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 /*
  * mo_oper - oper message handler
  */
-int mo_oper(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
+int mo_oper(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   assert(0 != cptr);
   assert(cptr == sptr);

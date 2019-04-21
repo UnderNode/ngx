@@ -400,7 +400,7 @@ int register_user(struct Client *cptr, struct Client *sptr)
      */
     send_reply(sptr, RPL_YOURHOST, cli_name(&me), version);
     send_reply(sptr, RPL_CREATED, creation);
-    send_reply(sptr, RPL_MYINFO, cli_name(&me), version, infousermodes,
+    send_reply(sptr, RPL_MYINFO, cli_name(&me), version, get_usermodes(),
                infochanmodes, infochanmodeswithparams);
     send_supported(sptr);
     m_lusers(sptr, sptr, 1, parv);
@@ -455,12 +455,22 @@ int register_user(struct Client *cptr, struct Client *sptr)
     SetUser(sptr);
   }
 
-  /* If they get both +x and an account during registration, hide
-   * their hostmask here.  Calling hide_hostmask() from IAuth's
-   * account assignment causes a numeric reply during registration.
-   */
-  // if (HasHiddenHost(sptr))
-  // hide_hostmask(sptr, FLAG_HIDDENHOST);
+  if (IsAdmin(sptr))
+  {
+    Update_admins_connect(UserStats);
+  }
+  if (IsCoder(sptr))
+  {
+    Update_coders_connect(UserStats);
+  }
+  if (IsBot(sptr))
+  {
+    Update_bots_connect(UserStats);
+  }
+  if (IsHelper(sptr))
+  {
+    Update_helpers_connect(UserStats);
+  }
   if (IsInvisible(sptr))
     ++UserStats.inv_clients;
   if (IsOper(sptr))
@@ -526,7 +536,11 @@ static const struct UserMode
     {FLAG_CHSERV, 'k'},
     {FLAG_DEBUG, 'g'},
     {FLAG_ACCOUNT, 'r'},
-    {FLAG_HIDDENHOST, 'x'}};
+    {FLAG_HIDDENHOST, 'x'},
+    {FLAG_HELPER, 'h'},
+    {FLAG_ADMIN, 'a'},
+    {FLAG_BOT, 'B'},
+    {FLAG_CODER, 'c'}};
 
 /** Length of #userModeList. */
 #define USERMODELIST_SIZE sizeof(userModeList) / sizeof(struct UserMode)
@@ -1017,6 +1031,20 @@ char *get_virtualhost(struct Client *cptr)
   return virtualhost;
 }
 
+/**
+ * Return all modes supported
+ * */
+char *get_usermodes(void)
+{
+  char *ubuf = umodeBuf;
+  for (int i = 0; i < USERMODELIST_SIZE; i++)
+  {
+    *ubuf++ = userModeList[i].c;
+  }
+  *ubuf = '\0';
+  return umodeBuf;
+}
+
 /** Set a user's mode.  This function prevents local users from setting
  * unauthorized modes and applies any other side effects of
  * a successful mode change.
@@ -1048,19 +1076,6 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
 
   if (parc < 3)
   {
-    // m = buf;
-    // *m++ = '+';
-    // for (i = 0; i < USERMODELIST_SIZE; i++)
-    // {
-    //   if (HasFlag(sptr, userModeList[i].flag) /*&&
-    //       userModeList[i].flag != FLAG_ACCOUNT*/
-    //   )
-    //     *m++ = userModeList[i].c;
-    // }
-    // *m = '\0';
-    // send_reply(sptr, RPL_UMODEIS, buf);
-    // if (HasFlag(sptr, FLAG_SERVNOTICE) && MyConnect(sptr) && cli_snomask(sptr) != (unsigned int)(IsOper(sptr) ? SNO_OPERDEFAULT : SNO_DEFAULT))
-    //   send_reply(sptr, RPL_SNOMASK, cli_snomask(sptr), cli_snomask(sptr));
     need_more_params(sptr, "MODE");
     return 0;
   }
@@ -1081,6 +1096,7 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
   { /* p is changed in loop too */
     for (m = *p; *m; m++)
     {
+
       switch (*m)
       {
       case '+':
@@ -1167,6 +1183,30 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
         }
         /* There is no -r */
         break;
+      case 'a':
+        if (what == MODE_ADD)
+        {
+          SetAdmin(sptr);
+        }
+        break;
+      case 'B':
+        if (what == MODE_ADD)
+        {
+          SetBot(sptr);
+        }
+        break;
+      case 'c':
+        if (what == MODE_ADD)
+        {
+          SetCoder(sptr);
+        }
+        break;
+      case 'h':
+        if (what == MODE_ADD)
+        {
+          SetHelper(sptr);
+        }
+        break;
       default:
         send_reply(sptr, ERR_UMODEUNKNOWNFLAG, *m);
         break;
@@ -1185,6 +1225,14 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
       ClearLocOp(sptr);
     if (!FlagHas(&setflags, FLAG_ACCOUNT) && IsAccount(sptr))
       ClrFlag(sptr, FLAG_ACCOUNT);
+    if (!FlagHas(&setflags, FLAG_ADMIN) && IsAdmin(sptr))
+      ClrFlag(sptr, FLAG_ADMIN);
+    if (!FlagHas(&setflags, FLAG_CODER) && IsCoder(sptr))
+      ClrFlag(sptr, FLAG_CODER);
+    if (!FlagHas(&setflags, FLAG_BOT) && IsBot(sptr))
+      ClrFlag(sptr, FLAG_BOT);
+    if (!FlagHas(&setflags, FLAG_HELPER) && IsHelper(sptr))
+      ClrFlag(sptr, FLAG_HELPER);
     /*
      * new umode; servers can set it, local users cannot;
      * prevents users from /kick'ing or /mode -o'ing

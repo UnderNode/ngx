@@ -217,7 +217,7 @@ int m_nick(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
             set_nick_name(cptr, sptr, nick, parc, parv);
             if (IsUser(sptr))
             {
-              sendrawto_one(cptr, ":N!services@nicknames.undernode.com NOTICE %s :*** Wellcome to home ;).",
+              sendrawto_one(cptr, ":N!nservice@nicknames.undernode.com NOTICE %s :*** Wellcome to home ;).",
                             (EmptyString(cli_name(sptr)) ? "*" : cli_name(sptr)));
             }
             ddb_end_transaction();
@@ -238,7 +238,7 @@ int m_nick(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
       }
       else
       {
-        sendrawto_one(cptr, ":N!services@nicknames.undernode.com NOTICE %s :*** Unknow internal error, contact to support.",
+        sendrawto_one(cptr, ":N!nservice@nicknames.undernode.com NOTICE %s :*** Unknow internal error, contact to support.",
                       (EmptyString(cli_name(sptr)) ? "*" : cli_name(sptr)));
         return 0;
       }
@@ -304,7 +304,7 @@ int m_nick(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
      */
       if (!ddb_init())
       {
-        sendrawto_one(cptr, ":N!services@nicknames.undernode.com NOTICE %s :*** Unknow internal error, contact to support.",
+        sendrawto_one(cptr, ":N!nservice@nicknames.undernode.com NOTICE %s :*** Unknow internal error, contact to support.",
                       (EmptyString(cli_name(sptr)) ? "*" : cli_name(sptr)));
         return 0;
       }
