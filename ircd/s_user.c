@@ -940,12 +940,19 @@ void send_user_info(struct Client *sptr, char *names, int rpl, InfoFormatter fmt
 int hide_hostmask(struct Client *cptr)
 {
 
-  ircd_snprintf(0, cli_user(cptr)->host, HOSTLEN, "%s", get_virtualhost(cptr));
+  Debug((DEBUG_INFO, "HOST: %s", cli_user(cptr)->host));
+
+  if (!EmptyString(cli_user(cptr)->host))
+  {
+    if ((strlen(cli_user(cptr)->host) > 1) && (strcmp(cli_user(cptr)->host, "-") != 0))
+    {
+      ircd_snprintf(0, cli_user(cptr)->host, HOSTLEN, "%s", get_virtualhost(cptr));
+    }
+  }
 
   /* ok, the client is now fully hidden, so let them know -- hikari */
   if (MyConnect(cptr))
     send_reply(cptr, RPL_HOSTHIDDEN, cli_user(cptr)->host);
-
   return 0;
 }
 
@@ -1280,18 +1287,13 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
    */
   if (!FlagHas(&setflags, FLAG_ACCOUNT) && IsAccount(sptr))
   {
-    int len = ACCOUNTLEN;
-    char *ts;
-    if ((ts = strchr(account, ':')))
-    {
-      len = (ts++) - account;
-      cli_user(sptr)->acc_create = atoi(ts);
-      Debug((DEBUG_DEBUG, "Received timestamped account in user mode; "
-                          "account \"%s\", timestamp %Tu",
-             account,
-             cli_user(sptr)->acc_create));
-    }
-    ircd_strncpy(cli_user(sptr)->account, account, len);
+    cli_user(sptr)->acc_create = time(NULL);
+    Debug((DEBUG_DEBUG, "Received timestamped account in user mode; "
+                        "account \"%s\", timestamp %Tu",
+           cli_name(sptr),
+           cli_user(sptr)->acc_create));
+
+    ircd_strncpy(cli_user(sptr)->account, cli_name(sptr), strlen(cli_name(sptr)));
   }
   if (!FlagHas(&setflags, FLAG_HIDDENHOST) && do_host_hiding && allow_modes != ALLOWMODES_DEFAULT)
     hide_hostmask(sptr);
