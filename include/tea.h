@@ -1,6 +1,4 @@
 /*
- * IRC - Internet Relay Chat, include/patchlevel.h
- *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 1, or (at your option)
@@ -14,23 +12,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- * $Id$
- *
  */
-#define PATCHLEVEL "19"
 
-#define RELEASE ".12."
+#ifndef TEA_H_
+#define TEA_H_
 
-/*
- * Deliberate empty lines
- */
-/* Do NOT edit those: */
+extern void tea(unsigned int *, unsigned int *, unsigned int *);
+extern void untea(unsigned int *,unsigned int *, unsigned int *);
 
-#ifndef BASE_VERSION
-#define BASE_VERSION "u2.10.U"
-#endif
 
-#ifndef MAJOR_PROTOCOL
-#define MAJOR_PROTOCOL "10"
-#endif
+#endif /* TEA_H_ */

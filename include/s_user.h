@@ -104,10 +104,16 @@ extern unsigned int umode_make_snomask(unsigned int oldmask, char *arg,
                                        int what);
 extern int send_supported(struct Client *cptr);
 
+/**
+ * Extracted from https://github.com/blacknode/NGx-IRC-Daemon.git
+ * */
+extern char *get_virtualhost(struct Client *cptr);
+
 #define NAMES_ALL 1 /**< List all users in channel */
 #define NAMES_VIS 2 /**< List only visible users in non-secret channels */
 #define NAMES_EON 4 /**< Add an 'End Of Names' reply to the end */
 #define NAMES_DEL 8 /**< Show delayed joined users only */
+#define KEYIPVIRTUAL "ty&789$5#4fgRTad?!"
 
 void do_names(struct Client* sptr, struct Channel* chptr, int filter);
 
