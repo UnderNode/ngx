@@ -1039,7 +1039,7 @@ char *get_usermodes(void)
   char *ubuf = umodeBuf;
   for (int i = 0; i < USERMODELIST_SIZE; i++)
   {
-      *ubuf++ = userModeList[i].c;
+    *ubuf++ = userModeList[i].c;
   }
   *ubuf = '\0';
   return umodeBuf;
@@ -1096,6 +1096,7 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
   { /* p is changed in loop too */
     for (m = *p; *m; m++)
     {
+
       switch (*m)
       {
       case '+':
@@ -1182,6 +1183,30 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
         }
         /* There is no -r */
         break;
+      case 'a':
+        if (what == MODE_ADD)
+        {
+          SetAdmin(sptr);
+        }
+        break;
+      case 'B':
+        if (what == MODE_ADD)
+        {
+          SetBot(sptr);
+        }
+        break;
+      case 'c':
+        if (what == MODE_ADD)
+        {
+          SetCoder(sptr);
+        }
+        break;
+      case 'h':
+        if (what == MODE_ADD)
+        {
+          SetHelper(sptr);
+        }
+        break;
       default:
         send_reply(sptr, ERR_UMODEUNKNOWNFLAG, *m);
         break;
@@ -1200,6 +1225,14 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
       ClearLocOp(sptr);
     if (!FlagHas(&setflags, FLAG_ACCOUNT) && IsAccount(sptr))
       ClrFlag(sptr, FLAG_ACCOUNT);
+    if (!FlagHas(&setflags, FLAG_ADMIN) && IsAdmin(sptr))
+      ClrFlag(sptr, FLAG_ADMIN);
+    if (!FlagHas(&setflags, FLAG_CODER) && IsCoder(sptr))
+      ClrFlag(sptr, FLAG_CODER);
+    if (!FlagHas(&setflags, FLAG_BOT) && IsBot(sptr))
+      ClrFlag(sptr, FLAG_BOT);
+    if (!FlagHas(&setflags, FLAG_HELPER) && IsHelper(sptr))
+      ClrFlag(sptr, FLAG_HELPER);
     /*
      * new umode; servers can set it, local users cannot;
      * prevents users from /kick'ing or /mode -o'ing
