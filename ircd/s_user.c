@@ -59,6 +59,7 @@
 #include "send.h"
 #include "struct.h"
 #include "supported.h"
+#include "tea.h"
 #include "sys.h"
 #include "userload.h"
 #include "version.h"
@@ -68,6 +69,7 @@
 
 /* #include <assert.h> -- Now using assert in ircd_log.h */
 #include <fcntl.h>
+#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -493,14 +495,14 @@ int register_user(struct Client *cptr, struct Client *sptr)
     /* To avoid sending +r to the client due to auth-on-connect, set
      * the "old" FLAG_ACCOUNT bit to match the client's value.
      */
-    if (IsAccount(cptr)) 
+    if (IsAccount(cptr))
     {
       sendrawto_one(cptr, ":N!services@nicknames.undernode.com NOTICE %s :*** Wellcome to home ;) (complete registration).",
-                  (EmptyString(cli_name(sptr)) ? "*" : cli_name(sptr)));
+                    (EmptyString(cli_name(sptr)) ? "*" : cli_name(sptr)));
     }
     client_set_privs(sptr, NULL, 0);
     send_umode(cptr, sptr, &flags, ALL_UMODES);
-    if ((cli_snomask(sptr) != SNO_DEFAULT) && HasFlag(sptr, FLAG_SERVNOTICE)) 
+    if ((cli_snomask(sptr) != SNO_DEFAULT) && HasFlag(sptr, FLAG_SERVNOTICE))
     {
       send_reply(sptr, RPL_SNOMASK, cli_snomask(sptr), cli_snomask(sptr));
     }
@@ -924,14 +926,95 @@ void send_user_info(struct Client *sptr, char *names, int rpl, InfoFormatter fmt
 int hide_hostmask(struct Client *cptr)
 {
 
-  ircd_snprintf(0, cli_user(cptr)->host, HOSTLEN, "%s.%s",
-                cli_user(cptr)->account, feature_str(FEAT_HIDDEN_HOST));
+  ircd_snprintf(0, cli_user(cptr)->host, HOSTLEN, "%s", get_virtualhost(cptr));
 
   /* ok, the client is now fully hidden, so let them know -- hikari */
   if (MyConnect(cptr))
     send_reply(cptr, RPL_HOSTHIDDEN, cli_user(cptr)->host);
 
   return 0;
+}
+
+char *get_virtualhost(struct Client *cptr)
+{
+  assert(0 != cptr);
+  unsigned int v[2], k[2], x[2];
+  int ts = 0;
+  char clave[13];
+
+  static char virtualhost[40];
+
+  bzero(virtualhost, sizeof(virtualhost));
+
+  struct hostent *hp;
+  struct in_addr addr;
+
+  hp = gethostbyname(cli_sock_ip(cptr));
+
+  if (hp)
+  {
+
+    memcpy(&addr, hp->h_addr_list[0], hp->h_length);
+  }
+  else
+  {
+    memcpy(&addr, cli_sock_ip(cptr), sizeof(addr));
+  }
+
+  strncpy(clave, KEYIPVIRTUAL, 12);
+
+  clave[12] = '\0';
+
+  /* resultado */
+  x[0] = x[1] = 0;
+
+  while (1)
+  {
+    char tmp;
+
+    /* resultado */
+    x[0] = x[1] = 0;
+
+    /* valor */
+    tmp = clave[6];
+    clave[6] = '\0';
+    k[0] = base64toint(clave);
+    clave[6] = tmp;
+    k[1] = base64toint(clave + 6);
+
+    v[0] = (k[0] & 0xffff0000) + ts;
+    v[1] = ntohl((unsigned long)addr.s_addr);
+
+    tea(v, k, x);
+
+    /* formato direccion virtual: qWeRty.AsDfGh.virtual */
+    inttobase64(virtualhost, x[0], 6);
+    virtualhost[6] = '.';
+    inttobase64(virtualhost + 7, x[1], 6);
+
+    if (IsIPv6(cptr))
+    {
+      strcpy(virtualhost + 13, ".v6");
+    }
+    else
+    {
+      strcpy(virtualhost + 13, ".v4");
+    }
+
+    /* el nombre de Host es correcto? */
+    if (!strchr(virtualhost, '[') &&
+        !strchr(virtualhost, ']'))
+      break; /* nice host name */
+    else
+    {
+      if (++ts == 65536)
+      { /* No deberia ocurrir nunca */
+        strcpy(virtualhost, "virtual.host");
+        break;
+      }
+    }
+  }
+  return virtualhost;
 }
 
 /** Set a user's mode.  This function prevents local users from setting

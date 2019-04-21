@@ -92,6 +92,7 @@ IRCD_SRC = \
 	client.c \
 	crule.c \
 	dbuf.c \
+	tea.c \
 	ddb.c \
 	destruct_event.c \
 	fileio.c \
