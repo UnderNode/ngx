@@ -417,14 +417,14 @@ static struct FeatureDesc {
   F_B(HIS_REWRITE, 0, 1, 0),
   F_I(HIS_REMOTE, 0, 1, 0),
   F_B(HIS_NETSPLIT, 0, 1, 0),
-  F_S(HIS_SERVERNAME, 0, "*.undernet.org", feature_notify_servername),
-  F_S(HIS_SERVERINFO, 0, "The Undernet Underworld", feature_notify_serverinfo),
-  F_S(HIS_URLSERVERS, 0, "http://www.undernet.org/servers.php", 0),
+  F_S(HIS_SERVERNAME, 0, "*.undernode.com", feature_notify_servername),
+  F_S(HIS_SERVERINFO, 0, "UnderNode IRC Network", feature_notify_serverinfo),
+  F_S(HIS_URLSERVERS, 0, "https://www.undernode.com", 0),
 
   /* Misc. random stuff */
-  F_S(NETWORK, 0, "UnderNet", 0),
-  F_S(URL_CLIENTS, 0, "ftp://ftp.undernet.org/pub/irc/clients", 0),
-  F_S(URLREG, 0, "http://cservice.undernet.org/live/", 0),
+  F_S(NETWORK, 0, "UnderNode", 0),
+  F_S(URL_CLIENTS, 0, "https://www.undernode.com", 0),
+  F_S(URLREG, 0, "https://www.undernode.com/", 0),
 
 #undef F_S
 #undef F_B
