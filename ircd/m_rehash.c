@@ -104,8 +104,8 @@ int mo_rehash(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 {
   int flag = 0;
 
-  if (!HasPriv(sptr, PRIV_REHASH))
-    return send_reply(sptr, ERR_NOPRIVILEGES);
+  // if (!HasPriv(sptr, PRIV_REHASH))
+  //   return send_reply(sptr, ERR_NOPRIVILEGES);
 
   if (parc > 1) { /* special processing */
     if (*parv[1] == 'm') {
