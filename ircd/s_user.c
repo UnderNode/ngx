@@ -940,8 +940,6 @@ void send_user_info(struct Client *sptr, char *names, int rpl, InfoFormatter fmt
 int hide_hostmask(struct Client *cptr)
 {
 
-  Debug((DEBUG_INFO, "HOST: %s", cli_user(cptr)->host));
-
   if (!EmptyString(cli_user(cptr)->host))
   {
     if ((strlen(cli_user(cptr)->host) > 1) && (strcmp(cli_user(cptr)->host, "-") != 0))
