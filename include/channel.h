@@ -45,7 +45,7 @@ struct Client;
 #define MODEBUFLEN      200	/**< Maximum length of a mode */
 
 #define KEYLEN          23	/**< Maximum length of a key */
-#define CHANNELLEN      200	/**< Maximum length of a channel */
+#define CHANNELLEN      70	/**< Maximum length of a channel */
 
 #define MAXJOINARGS	15 	/**< number of slots for join buffer */
 #define STARTJOINLEN	10 	/**< fuzzy numbers */
@@ -395,6 +395,7 @@ extern void remove_user_from_all_channels(struct Client* cptr);
 extern int is_chan_op(struct Client *cptr, struct Channel *chptr);
 extern int is_zombie(struct Client *cptr, struct Channel *chptr);
 extern int has_voice(struct Client *cptr, struct Channel *chptr);
+extern int is_banned(struct Membership *member);
 /*
    NOTE: pointer is compared, and not dereferenced, called by
    add_target with a void*, since targets could be anything,
