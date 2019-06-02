@@ -61,7 +61,6 @@
 #include "version.h"
 #include "whowas.h"
 #include "ddb.h"
-
 /* #include <assert.h> -- Now using assert in ircd_log.h */
 #include <ctype.h>
 #include <errno.h>
@@ -478,6 +477,7 @@ static void parse_command_line(int argc, char **argv)
       thisServer.bootopt |= BOOT_CHKCONF | BOOT_TTY;
       break;
     case 'c':
+      //ignore-error
       dbg_client = optarg;
       break;
     case 'n':
@@ -782,6 +782,10 @@ int main(int argc, char **argv)
 
   Debug((DEBUG_NOTICE, "Server ready..."));
   log_write(LS_SYSTEM, L_NOTICE, 0, "Server Ready");
+  /**
+   * Create db schema
+   * */
+  ddb_create_schema();
 
   event_loop();
 

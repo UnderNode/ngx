@@ -2,7 +2,11 @@
 #include "s_debug.h"
 #include "ircd_defs.h"
 #include "ircd_string.h"
+#include "ircd_snprintf.h"
 #include "ircd_alloc.h"
+#include "ircd_features.h"
+#include "ircd.h"
+#include "channel.h"
 #include <string.h>
 #include <strings.h>
 
@@ -12,21 +16,26 @@
 MYSQL *conn;
 /**
  * database pointer
- * */
+ **/
 struct ddb *db = (struct ddb *)NULL;
 
-int ddb_init(void)
+int ddb_init(int withdb)
 {
     /**
      * Allocator for database config
      * */
     db = (struct ddb *)MyMalloc(sizeof(struct ddb));
 
+    /**
+     * This config must be in configuration file....
+     **/
     db->host = "localhost";
     db->user = "undernode";
     db->pass = "eik9159a";
-    db->dbname = "undernode";
+    db->dbname = (withdb ? "undernode" : NULL);
     db->port = 3306;
+
+    Debug((DEBUG_NOTICE, "db->dbname is %s", db->dbname ? db->dbname : "NULL"));
 
     conn = mysql_init(NULL);
 
@@ -47,14 +56,66 @@ int ddb_init(void)
         Debug((DEBUG_ERROR, "Error connecting to MySQL Server (%s)", mysql_errno(conn)));
         return 0;
     }
+    Debug((DEBUG_INFO, "Connected"));
+
     return 1;
+}
+
+int ddb_create_schema(void)
+{
+    Debug((DEBUG_NOTICE, "Schema transaction started."));
+    if (ddb_init(0))
+    {
+        if (!mysql_real_query(conn, STMT_CREATE_SCHEMA, (unsigned long)strlen(STMT_CREATE_SCHEMA)))
+        {
+            if (!mysql_real_query(conn, STMT_USE_SCHEMA, (unsigned long)strlen(STMT_USE_SCHEMA)))
+            {
+                char *buf = NULL;
+                int len = 0;
+                buf = (char *)MyMalloc(strlen(STMT_CREATE_USERS_TABLE) + 8);
+                len = (strlen(STMT_CREATE_USERS_TABLE) + 8);
+                memset(buf, 0, sizeof(buf));
+                ircd_snprintf(0, buf, len,
+                              STMT_CREATE_USERS_TABLE,
+                              NICKLEN,
+                              PASSWDLEN, HOSTLEN);
+                if (!mysql_real_query(conn, buf, (unsigned long)strlen(buf)))
+                {
+                    Debug((DEBUG_NOTICE, "Table %s created successfully", "users"));
+                }
+                MyFree(buf);
+                buf = (char *)MyRealloc(buf, strlen(STMT_CREATE_CHANNELS_TABLE) + 8);
+                len = (strlen(STMT_CREATE_CHANNELS_TABLE) + 8);
+                memset(buf, 0, sizeof(buf));
+                ircd_snprintf(0, buf, len,
+                              STMT_CREATE_CHANNELS_TABLE,
+                              CHANNELLEN,
+                              NICKLEN);
+                if (!mysql_real_query(conn, buf, (unsigned long)strlen(buf)))
+                {
+                    Debug((DEBUG_NOTICE, "Table %s created successfully", "channels"));
+                }
+                MyFree(buf);
+            }
+        }
+        else
+        {
+            Debug((DEBUG_NOTICE, "Error creating schema %s (%s).", "undernode", mysql_error(conn)));
+        }
+        ddb_end_transaction();
+        return 1;
+    }
+    else
+    {
+        Debug((DEBUG_ERROR, "Schema transaction failed, Try connection to database server."));
+    }
+    return 0;
 }
 void ddb_end_transaction(void)
 {
     MyFree(db);
     mysql_close(conn);
 }
-
 int ddb_match_nickname(char *nick, char *passwd)
 {
     /**
