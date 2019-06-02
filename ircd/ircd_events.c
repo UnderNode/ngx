@@ -374,7 +374,6 @@ event_loop(void)
 {
   assert(0 != evInfo.engine);
   assert(0 != evInfo.engine->eng_loop);
-
   (*evInfo.engine->eng_loop)(&evInfo.gens);
 }
 
