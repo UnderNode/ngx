@@ -560,8 +560,8 @@ int mr_server(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
    * Detect protocol
    */
   hop = atoi(parv[2]);
-  start_timestamp = atoi(parv[3]);
-  timestamp = atoi(parv[4]);
+  start_timestamp = atol(parv[3]);
+  timestamp = atol(parv[4]);
   prot = parse_protocol(parv[5]);
   if (!prot)
     return exit_client_msg(cptr, sptr, &me, "Bogus protocol (%s)", parv[5]);
@@ -710,9 +710,9 @@ int ms_server(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   Debug((DEBUG_INFO, "Got SERVER %s with timestamp [%s] age %Tu (%Tu)",
 	 host, parv[4], start_timestamp, cli_serv(&me)->timestamp));
 
-  if (timestamp < OLDEST_TS)
-    return exit_client_msg(cptr, sptr, &me,
-        "Bogus timestamps (%s %s)", parv[3], parv[4]);
+  // if (timestamp < OLDEST_TS)
+  //   return exit_client_msg(cptr, sptr, &me,
+  //       "Bogus timestamps (%s %s)", parv[3], parv[4]);
 
   if (parv[parc - 1][0] == '\0')
     return exit_client_msg(cptr, cptr, &me,
