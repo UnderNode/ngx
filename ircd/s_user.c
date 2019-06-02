@@ -507,7 +507,7 @@ int register_user(struct Client *cptr, struct Client *sptr)
      */
     if (IsAccount(cptr))
     {
-      sendrawto_one(cptr, ":N!services@nicknames.undernode.com NOTICE %s :*** Wellcome to home ;) (complete registration).",
+      sendrawto_one(cptr, ":NiCK!services@services.undernode.com NOTICE %s :*** Wellcome to home ;).",
                     (EmptyString(cli_name(sptr)) ? "*" : cli_name(sptr)));
     }
     client_set_privs(sptr, NULL, 0);
@@ -942,7 +942,10 @@ int hide_hostmask(struct Client *cptr)
 
   if (!EmptyString(cli_user(cptr)->host))
   {
-    if ((strlen(cli_user(cptr)->host) > 1) && (strcmp(cli_user(cptr)->host, "-") != 0))
+    /**
+     * Ignore hide_hostmask for server services
+     * */
+    if (!IsService(cli_user(cptr)->server))
     {
       ircd_snprintf(0, cli_user(cptr)->host, HOSTLEN, "%s", get_virtualhost(cptr));
     }
