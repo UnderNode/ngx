@@ -372,6 +372,16 @@ struct Client;
 #define TOK_XREPLY		"XR"
 #define CMD_XREPLY		MSG_XREPLY, TOK_XREPLY
 
+#define MSG_CHECKBAN		"CHECKBAN"
+#define TOK_CHECKBAN		"CHK"
+#define CMD_CHECKBAN		MSG_CHECKBAN, TOK_XREPLY
+
+#define MSG_DBQ		"DBQ"
+#define TOK_DBQ		"DBQ"
+#define CMD_DBQ		MSG_DBQ, TOK_DBQ
+
+
+
 /*
  * Constants
  */

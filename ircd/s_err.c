@@ -800,9 +800,9 @@ static Numeric replyTable[] = {
 /* 383 */
   { 0 },
 /* 384 */
-  { 0 },
+  { RPL_CHECKBAN, ":%s", "384" },
 /* 385 */
-  { 0 },
+  { RPL_ENDOFCHECKBAN, "End of /CHECKBAN", "385" },
 /* 386 */
   { 0 },
 /* 387 */
@@ -826,7 +826,7 @@ static Numeric replyTable[] = {
 /* 396 */
   { RPL_HOSTHIDDEN, "%s :is now your hidden host", "396" },
 /* 397 */
-  { 0 },
+  { RPL_NOTFOUNDCHECKBAN, ":Not found some ban that affected to \002%s\002 on \002%s\002", "397" },
 /* 398 */
   { 0 },
 /* 399 */

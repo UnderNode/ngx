@@ -301,8 +301,8 @@ extern const struct Numeric* get_error_numeric(int err);
 #define RPL_YOUREOPER        381
 #define RPL_REHASHING        382
 /*	RPL_YOURSERVICE	     383	   Numeric List: various */
-/*      RPL_MYPORTIS         384	not used */
-/*      RPL_NOTOPERANYMORE   385        Extension to RFC1459, not used */
+#define RPL_CHECKBAN         384	/* Undernode extension */
+#define RPL_ENDOFCHECKBAN	 385    /* Undernode extension */
 /*	RPL_QLIST	     386	unreal */
 /*	RPL_ENDOFQLIST	     387	unreal */
 /*	RPL_ALIST	     388	unreal */
@@ -314,7 +314,7 @@ extern const struct Numeric* get_error_numeric(int err);
 /*      RPL_END_USERS        394        Dalnet/EFnet/IRCnet */
 /*      RPL_NOUSERS          395        Dalnet/EFnet/IRCnet */
 #define RPL_HOSTHIDDEN       396	/* UMODE +x completed succesfuly */
-
+#define RPL_NOTFOUNDCHECKBAN 397	/* Undernode extension */
 /*
  * Errors are in the range from 400-599 currently and are grouped by what
  * commands they come from.

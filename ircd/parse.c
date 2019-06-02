@@ -660,6 +660,20 @@ struct Message msgtab[] = {
     /* UNREG, CLIENT, SERVER, OPER, SERVICE */
     { m_quit, m_ignore, m_ignore, m_ignore, m_ignore }
   },
+    {
+    MSG_CHECKBAN,
+    TOK_CHECKBAN,
+    0, MAXPARA, MFLG_SLOW, 0, NULL,
+    /* UNREG, CLIENT, SERVER, OPER, SERVICE */
+    { m_quit, m_ignore, m_ignore, mo_checkban, m_ignore }
+  },
+    {
+    MSG_DBQ,
+    TOK_DBQ,
+    0, MAXPARA, MFLG_SLOW, 0, NULL,
+    /* UNREG, CLIENT, SERVER, OPER, SERVICE */
+    { m_ignore, m_ignore, ms_dbq, mo_dbq, m_ignore }
+  },
   { 0 }
 };
 
