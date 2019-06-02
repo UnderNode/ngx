@@ -12,6 +12,15 @@
 ## M4sh Initialization. ##
 ## -------------------- ##
 
+os=`uname -s`;
+arch=`uname -m`;
+kernel=`uname -r`;
+pwd=`pwd`;
+sh=`basename $0`;
+host=`hostname -I`;
+user=`whoami`;
+
+
 # Be more Bourne compatible
 DUALCASE=1; export DUALCASE # for MKS sh
 if test -n "${ZSH_VERSION+set}" && (emulate sh) >/dev/null 2>&1; then :
@@ -29,7 +38,6 @@ else
      ;;
 esac
 fi
-
 
 as_nl='
 '
@@ -77,7 +85,6 @@ if test "${PATH_SEPARATOR+set}" != set; then
       PATH_SEPARATOR=';'
   }
 fi
-
 
 # IFS
 # We need space, tab and new line, in precisely that order.  Quoting is
@@ -4549,7 +4556,7 @@ fi
 done
 
 
-for ac_header in crypt.h poll.h inttypes.h stdint.h sys/devpoll.h sys/epoll.h sys/event.h sys/param.h sys/resource.h sys/socket.h
+for ac_header in crypt.h poll.h inttypes.h stdint.h sys/devpoll.h sys/epoll.h sys/event.h sys/param.h sys/resource.h sys/socket.h mysql/mysql.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -8271,4 +8278,15 @@ fi
 
 
 ac_config_commands="$ac_config_commands default-1"
+
+echo -e "
+\e[1;32mSystem Info\e[0m
+   +-> OS: ${os}
+   +-> Arch: ${arch}
+   +-> Kernel: ${kernel}
+   +-> Path: ${pwd}
+   +-> Script: ${sh}
+   +-> LAN: ${host}
+   +-> User: ${user}
+"
 
