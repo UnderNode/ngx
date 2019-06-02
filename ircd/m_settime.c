@@ -117,11 +117,11 @@ int ms_settime(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   if (parc < 2) /* verify argument count */
     return need_more_params(sptr, "SETTIME");
 
-  t = atoi(parv[1]); /* convert time and compute delta */
+  t = atol(parv[1]); /* convert time and compute delta */
   dt = TStime() - t;
 
   /* verify value */
-  if (t < OLDEST_TS || dt < -9000000)
+  if (t < OLDEST_TS)
   {
     if (IsServer(sptr)) /* protocol violation if it's from a server */
       protocol_violation(sptr, "SETTIME: Bad value (%Tu, delta %ld)", t, dt);
@@ -217,7 +217,7 @@ int mo_settime(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   if (parc == 2 && MyUser(sptr)) /* default to me */
     parv[parc++] = cli_name(&me);
 
-  t = atoi(parv[1]); /* convert the time */
+  t = atol(parv[1]); /* convert the time */
 
   /* If we're reliable_clock or if the oper specified a 0 time, use current */
   if (!t || feature_bool(FEAT_RELIABLE_CLOCK))
