@@ -154,9 +154,13 @@ int m_nick(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
   assert(cptr == sptr);
 
   if (IsServerPort(cptr))
+  {
     return exit_client(cptr, cptr, &me, "Use a different port");
+  }
   if (IsWebircPort(cptr) && !cli_wline(cptr))
+  {
     return exit_client(cptr, cptr, &me, "WebIRC authorization required");
+  }
 
   if (parc < 2)
   {
@@ -170,6 +174,9 @@ int m_nick(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
    */
   arg = parv[1];
 
+  /**
+   * Find for wildcard
+   * */
   char *pass = strchr(arg, ':');
 
   if (pass)
@@ -201,7 +208,7 @@ int m_nick(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
     }
     if (!(acptr = FindClient(nick)))
     {
-      if (ddb_init())
+      if (ddb_init(1))
       {
         if (ddb_fetch_nick(nick) == MYSQL_DB_OK)
         {
@@ -217,7 +224,7 @@ int m_nick(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
             set_nick_name(cptr, sptr, nick, parc, parv);
             if (IsUser(sptr))
             {
-              sendrawto_one(cptr, ":N!nservice@nicknames.undernode.com NOTICE %s :*** Wellcome to home ;).",
+              sendrawto_one(cptr, ":NiCK!service@services.undernode.com NOTICE %s :*** Wellcome to home ;).",
                             (EmptyString(cli_name(sptr)) ? "*" : cli_name(sptr)));
             }
             ddb_end_transaction();
@@ -302,7 +309,7 @@ int m_nick(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
       /*
      * No collisions, all clear...
      */
-      if (!ddb_init())
+      if (!ddb_init(1))
       {
         sendrawto_one(cptr, ":N!nservice@nicknames.undernode.com NOTICE %s :*** Unknow internal error, contact to support.",
                       (EmptyString(cli_name(sptr)) ? "*" : cli_name(sptr)));
