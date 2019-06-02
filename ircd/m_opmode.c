@@ -122,11 +122,11 @@ static void make_oper(struct Client *sptr, struct Client *dptr)
     send_reply(dptr, RPL_YOUREOPER);
 
     sendto_opmask_butone(0, SNO_OLDSNO, "%s (%s@%s) is now operator (%c)",
-			 cli_name(dptr), cli_user(dptr)->username,
-			 cli_sockhost(dptr), IsOper(dptr) ? 'O' : 'o');
+                         cli_name(dptr), cli_user(dptr)->username,
+                         cli_sockhost(dptr), IsOper(dptr) ? 'O' : 'o');
 
     log_write(LS_OPER, L_INFO, 0, "REMOTE OPER (%#C) by (%s)", dptr,
-	      cli_name(sptr));
+              cli_name(sptr));
   }
 }
 
@@ -154,7 +154,7 @@ static void de_oper(struct Client *dptr)
 /*
  * ms_opmode - server message handler
  */
-int ms_opmode(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
+int ms_opmode(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   struct Channel *chptr = 0;
   struct ModeBuf mbuf;
@@ -177,7 +177,7 @@ int ms_opmode(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     if (!MyConnect(dptr))
     {
       sendcmdto_serv_butone(sptr, CMD_OPMODE, cptr, "%s %s",
-        parv[1], parv[2]);
+                            parv[1], parv[2]);
       return 0;
     }
 
@@ -200,17 +200,17 @@ int ms_opmode(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     return send_reply(sptr, ERR_NOSUCHCHANNEL, parv[1]);
 
   modebuf_init(&mbuf, sptr, cptr, chptr,
-	       (MODEBUF_DEST_CHANNEL | /* Send MODE to channel */
-		MODEBUF_DEST_SERVER  | /* And to server */
-		MODEBUF_DEST_OPMODE  | /* Use OPMODE */
-		MODEBUF_DEST_HACK4   | /* Generate a HACK(4) notice */
-		MODEBUF_DEST_LOG));    /* Log the mode changes to OPATH */
+               (MODEBUF_DEST_CHANNEL | /* Send MODE to channel */
+                MODEBUF_DEST_SERVER |  /* And to server */
+                MODEBUF_DEST_OPMODE |  /* Use OPMODE */
+                MODEBUF_DEST_HACK4 |   /* Generate a HACK(4) notice */
+                MODEBUF_DEST_LOG));    /* Log the mode changes to OPATH */
 
   mode_parse(&mbuf, cptr, sptr, chptr, parc - 2, parv + 2,
-	     (MODE_PARSE_SET    | /* Set the modes on the channel */
-	      MODE_PARSE_STRICT | /* Be strict about it */
-	      MODE_PARSE_FORCE),  /* And force them to be accepted */
-	      NULL);
+             (MODE_PARSE_SET |    /* Set the modes on the channel */
+              MODE_PARSE_STRICT | /* Be strict about it */
+              MODE_PARSE_FORCE),  /* And force them to be accepted */
+             NULL);
 
   modebuf_flush(&mbuf); /* flush the modes */
 
@@ -220,7 +220,7 @@ int ms_opmode(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 /*
  * mo_opmode - oper message handler
  */
-int mo_opmode(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
+int mo_opmode(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   struct Channel *chptr = 0;
   struct ModeBuf mbuf;
@@ -238,14 +238,12 @@ int mo_opmode(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   if (*chname == '!')
   {
     chname++;
-    if (!HasPriv(sptr, IsLocalChannel(chname) ? PRIV_FORCE_LOCAL_OPMODE
-                                              : PRIV_FORCE_OPMODE))
+    if (!IsPrivileged(sptr))
       return send_reply(sptr, ERR_NOPRIVILEGES);
     force = 1;
   }
-
-  if (!HasPriv(sptr,
-	       IsLocalChannel(chname) ? PRIV_LOCAL_OPMODE : PRIV_OPMODE))
+  
+  if (!IsPrivileged(sptr))
     return send_reply(sptr, ERR_NOPRIVILEGES);
 
   if (!IsChannelName(chname) || !(chptr = FindChannel(chname)))
@@ -255,19 +253,18 @@ int mo_opmode(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     return send_reply(sptr, ERR_QUARANTINED, chptr->chname, qreason);
 
   modebuf_init(&mbuf, sptr, cptr, chptr,
-	       (MODEBUF_DEST_CHANNEL | /* Send MODE to channel */
-		MODEBUF_DEST_SERVER  | /* And to server */
-		MODEBUF_DEST_OPMODE  | /* Use OPMODE */
-		MODEBUF_DEST_HACK4   | /* Generate a HACK(4) notice */
-		MODEBUF_DEST_LOG));    /* Log the mode changes to OPATH */
+               (MODEBUF_DEST_CHANNEL | /* Send MODE to channel */
+                MODEBUF_DEST_SERVER |  /* And to server */
+                MODEBUF_DEST_OPMODE |  /* Use OPMODE */
+                MODEBUF_DEST_HACK4 |   /* Generate a HACK(4) notice */
+                MODEBUF_DEST_LOG));    /* Log the mode changes to OPATH */
 
   mode_parse(&mbuf, cptr, sptr, chptr, parc - 2, parv + 2,
-	     (MODE_PARSE_SET |    /* set the modes on the channel */
-	      MODE_PARSE_FORCE),  /* And force them to be accepted */
-	      NULL);
+             (MODE_PARSE_SET |   /* set the modes on the channel */
+              MODE_PARSE_FORCE), /* And force them to be accepted */
+             NULL);
 
   modebuf_flush(&mbuf); /* flush the modes */
 
   return 0;
 }
-
