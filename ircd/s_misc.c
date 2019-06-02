@@ -123,9 +123,9 @@ char *date(time_t clock)
   if (minswest < 0)
     minswest = -minswest;
 
-  sprintf(buf, "%s %s %d %d -- %02d:%02d %c%02d:%02d",
+  sprintf(buf, "%s, %s %d/%d -- %02d:%02d:%02d %c%02d:%02d",
       weekdays[lt->tm_wday], months[lt->tm_mon], lt->tm_mday,
-      1900 + lt->tm_year, lt->tm_hour, lt->tm_min,
+      1900 + lt->tm_year, lt->tm_hour, lt->tm_min, lt->tm_sec,
       plus, minswest / 60, minswest % 60);
 
   return buf;
