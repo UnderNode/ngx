@@ -388,16 +388,16 @@ struct Ban *find_ban(struct Client *cptr, struct Ban *banlist)
   ircd_snprintf(0, nu, sizeof(nu), "%s!%s",
                 cli_name(cptr), cli_user(cptr)->username);
   ircd_ntoa_r(iphost, &cli_ip(cptr));
-  if (!IsAccount(cptr))
-    sr = NULL;
-  else if (HasHiddenHost(cptr))
-    sr = cli_user(cptr)->realhost;
-  else
-  {
-    ircd_snprintf(0, tmphost, HOSTLEN, "%s",
-                  cli_user(cptr)->host);
-    sr = tmphost;
-  }
+  // if (!IsAccount(cptr))
+  //   sr = NULL;
+  // else if (HasHiddenHost(cptr))
+  //   sr = cli_user(cptr)->realhost;
+  // else
+  // {
+  ircd_snprintf(0, tmphost, HOSTLEN, "%s",
+                cli_user(cptr)->host);
+  sr = tmphost;
+  //}
 
   /* Walk through ban list. */
   for (found = NULL; banlist; banlist = banlist->next)
@@ -433,7 +433,7 @@ struct Ban *find_ban(struct Client *cptr, struct Ban *banlist)
  * @param[in] member The Membership to test for banned-ness.
  * @return Non-zero if the member is banned, zero if not.
  */
-static int is_banned(struct Membership *member)
+int is_banned(struct Membership *member)
 {
   if (IsBanValid(member))
     return IsBanned(member);
