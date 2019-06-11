@@ -3,24 +3,27 @@
 #define MYSQL_DB_ERROR 0x0001
 #define MYSQL_DB_OK 0x0002
 #define MYSQL_DB_TRYAGAIN 0x0004
-
+#define MYSQL_DB_BIND_PARAM_ERROR 0x0008
+#define MYSQL_DB_EXE_STMT_ERROR 0x0010
+#define MYSQL_DB_STORE_ERROR 0x0020
+#define MYSQL_DB_BIND_RESULT_ERROR 0x0040
+#define MYSQL_DB_QUERY_ERROR 0x0080
 #define STMT_CREATE_SCHEMA "CREATE SCHEMA IF NOT EXISTS undernode"
 #define STMT_USE_SCHEMA "USE undernode"
 #define STMT_PASSWORD "SELECT username, password " \
                       "FROM users WHERE username = ? AND password = BINARY ? LIMIT 1"
 #define STMT_FETCH_NICK "SELECT username FROM users WHERE " \
                         "username = ? LIMIT 1"
-#define STMT_CREATE_USERS_TABLE "CREATE TABLE IF NOT EXISTS users (" \
-                                "id INT PRIMARY KEY AUTO_INCREMENT," \
-                                "username VARCHAR(%d) NOT NULL UNIQUE,"     \
-                                "password VARCHAR(%d) NOT NULL,"     \
-                                "vhost VARCHAR(%d) NOT NULL)"
+#define STMT_CREATE_USERS_TABLE "CREATE TABLE IF NOT EXISTS users ("    \
+                                "id INT PRIMARY KEY AUTO_INCREMENT,"    \
+                                "username VARCHAR(%d) NOT NULL UNIQUE," \
+                                "password VARCHAR(%d) NOT NULL,"        \
+                                "vhost VARCHAR(%d))"
 #define STMT_CREATE_CHANNELS_TABLE "CREATE TABLE IF NOT EXISTS channels (" \
                                    "id INT PRIMARY KEY AUTO_INCREMENT,"    \
-                                   "channel VARCHAR(%d) NOT NULL UNIQUE,"         \
-                                   "owner VARCHAR(%d) NOT NULL UNIQUE, " \
-                                   "FOREIGN KEY (id) REFERENCES users(id))" 
-
+                                   "channel VARCHAR(%d) NOT NULL UNIQUE,"  \
+                                   "owner VARCHAR(%d) NOT NULL UNIQUE, "   \
+                                   "FOREIGN KEY (id) REFERENCES users(id))"
 /**
  * Info for MySQL Connection
  **/

@@ -798,7 +798,7 @@ static Numeric replyTable[] = {
 /* 382 */
   { RPL_REHASHING, "%s :Rehashing", "382" },
 /* 383 */
-  { 0 },
+  { RPL_ISSERVICE, "%s :is a network service", "383" },
 /* 384 */
   { RPL_CHECKBAN, ":%s", "384" },
 /* 385 */

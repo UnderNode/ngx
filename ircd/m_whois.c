@@ -210,6 +210,9 @@ static void do_whois(struct Client *sptr, struct Client *acptr, int parc)
 
     if (IsAccount(acptr))
       send_reply(sptr, RPL_WHOISACCOUNT, name, user->account);
+    
+    if (IsBot(acptr))
+      send_reply(sptr, RPL_ISSERVICE, name);
 
     if (HasHiddenHost(acptr) && (IsAnOper(sptr) || acptr == sptr))
       send_reply(sptr, RPL_WHOISACTUALLY, name, user->username,

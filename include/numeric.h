@@ -300,7 +300,7 @@ extern const struct Numeric* get_error_numeric(int err);
 
 #define RPL_YOUREOPER        381
 #define RPL_REHASHING        382
-/*	RPL_YOURSERVICE	     383	   Numeric List: various */
+#define	RPL_ISSERVICE	     383	 /*  Undernode extension */
 #define RPL_CHECKBAN         384	/* Undernode extension */
 #define RPL_ENDOFCHECKBAN	 385    /* Undernode extension */
 /*	RPL_QLIST	     386	unreal */

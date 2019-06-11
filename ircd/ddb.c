@@ -35,8 +35,6 @@ int ddb_init(int withdb)
     db->dbname = (withdb ? "undernode" : NULL);
     db->port = 3306;
 
-    Debug((DEBUG_NOTICE, "db->dbname is %s", db->dbname ? db->dbname : "NULL"));
-
     conn = mysql_init(NULL);
 
     if (!conn)
@@ -56,7 +54,6 @@ int ddb_init(int withdb)
         Debug((DEBUG_ERROR, "Error connecting to MySQL Server (%s)", mysql_errno(conn)));
         return 0;
     }
-    Debug((DEBUG_INFO, "Connected"));
 
     return 1;
 }
@@ -238,17 +235,17 @@ int ddb_fetch_nick(char *nick)
     if (mysql_stmt_bind_param(stmt, params))
     {
         mysql_stmt_free_result(stmt);
-        return MYSQL_DB_ERROR;
+        return MYSQL_DB_BIND_PARAM_ERROR;
     }
     if (mysql_stmt_execute(stmt))
     {
         mysql_stmt_free_result(stmt);
-        return MYSQL_DB_ERROR;
+        return MYSQL_DB_EXE_STMT_ERROR;
     }
     if (mysql_stmt_store_result(stmt))
     {
         mysql_stmt_free_result(stmt);
-        return MYSQL_DB_ERROR;
+        return MYSQL_DB_STORE_ERROR;
     }
     char nickbuf[NICKLEN + 1];
 
@@ -261,7 +258,7 @@ int ddb_fetch_nick(char *nick)
     if (mysql_stmt_bind_result(stmt, params))
     {
         mysql_stmt_free_result(stmt);
-        return MYSQL_DB_ERROR;
+        return MYSQL_DB_BIND_RESULT_ERROR;
     }
 
     mysql_stmt_fetch(stmt);

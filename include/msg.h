@@ -380,6 +380,10 @@ struct Client;
 #define TOK_DBQ		"DBQ"
 #define CMD_DBQ		MSG_DBQ, TOK_DBQ
 
+#define MSG_RENAME  "RENAME"
+#define TOK_RENAME  "RN"
+#define CMD_RENAME  MSG_RENAME, TOK_RENAME
+
 
 
 /*

@@ -86,4 +86,8 @@ struct User {
   time_t	     acc_create;              /**< IRC account timestamp */
 };
 
+struct Dbq {
+  
+};
+
 #endif /* INCLUDED_struct_h */

@@ -173,6 +173,7 @@ extern int mo_wallops(struct Client*, struct Client*, int, char*[]);
 extern int mo_wallusers(struct Client*, struct Client*, int, char*[]);
 extern int mo_checkban(struct Client *, struct Client*, int, char*[]);
 extern int mo_xquery(struct Client*, struct Client*, int, char*[]);
+extern int mo_rename(struct Client*, struct Client*, int, char*[]);
 extern int mr_error(struct Client*, struct Client*, int, char*[]);
 extern int mr_error(struct Client*, struct Client*, int, char*[]);
 extern int mr_pong(struct Client*, struct Client*, int, char*[]);
